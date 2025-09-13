@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { ArrowLeftIcon, MailIcon, SendIcon, BriefcaseIcon, MegaphoneIcon } from './icons';
+import { MailIcon, SendIcon, BriefcaseIcon, MegaphoneIcon } from './icons';
 import { ContactWaveBackground } from './ContactWaveBackground';
+import { BackButton } from './BackButton';
 
 interface ContactPageProps {
   onBack: () => void;
@@ -69,14 +70,7 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
 
         <div className="relative z-10 w-full flex flex-col items-center flex-grow">
             <header className="w-full max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-start items-center">
-                <button 
-                    onClick={onBack}
-                    className="bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg hover:bg-white"
-                    aria-label="Back to Home"
-                >
-                    <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                    Back
-                </button>
+                <BackButton onClick={onBack} />
             </header>
 
             <main className="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center py-12 px-4">

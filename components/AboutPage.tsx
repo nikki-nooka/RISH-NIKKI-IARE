@@ -1,5 +1,6 @@
 import React from 'react';
-import { ArrowLeftIcon, GlobeIcon, InfoIcon, ScanIcon } from './icons';
+import { GlobeIcon, InfoIcon, ScanIcon } from './icons';
+import { BackButton } from './BackButton';
 
 interface AboutPageProps {
   onBack: () => void;
@@ -9,14 +10,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
   return (
     <div className="w-full min-h-screen flex flex-col p-4 sm:p-6 lg:p-8 animate-fade-in bg-gradient-to-br from-slate-50 to-blue-50">
         <header className="w-full max-w-5xl mx-auto py-4 flex justify-start items-center">
-            <button 
-                onClick={onBack}
-                className="bg-white text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg hover:bg-slate-100"
-                aria-label="Back to Home"
-            >
-                <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                Back
-            </button>
+            <BackButton onClick={onBack} />
         </header>
         
         <main className="flex-grow flex flex-col items-center text-center px-4 py-8">

@@ -1,5 +1,8 @@
+
+
+
 import { GoogleGenAI, Type } from "@google/genai";
-import type { AnalysisResult, LocationAnalysisResult, Facility, PrescriptionAnalysisResult, HealthForecast, MentalHealthResult, SymptomAnalysisResult, Page, BotCommandResponse, Alert, AlertSource } from '../types';
+import type { AnalysisResult, LocationAnalysisResult, Facility, PrescriptionAnalysisResult, HealthForecast, MentalHealthResult, SymptomAnalysisResult, Page, BotCommandResponse, Alert, AlertSource, CityHealthSnapshot } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -98,6 +101,7 @@ export const analyzeLocationByCoordinates = async (lat: number, lng: number, kno
 
     let analysis: LocationAnalysisResult;
     try {
+        // FIX: Access response.text directly as per guidelines
         const jsonText = analysisResult.value.text.trim();
         analysis = JSON.parse(jsonText) as LocationAnalysisResult;
     } catch (e) {
@@ -634,4 +638,88 @@ export const getLiveHealthAlerts = async (): Promise<Alert[]> => {
         sources: sources,
         fetchedAt: fetchedTimestamp,
     }));
+};
+
+const cityHealthSnapshotSchema = {
+    type: Type.OBJECT,
+    properties: {
+        cityName: { type: Type.STRING },
+        country: { type: Type.STRING },
+        lastUpdated: { type: Type.STRING, description: "A brief statement about the time frame of the data, e.g., 'Data based on reports from the last 30 days'." },
+        overallSummary: { type: Type.STRING, description: "A 2-3 sentence summary of the current public health situation in the city." },
+        diseases: {
+            type: Type.ARRAY,
+            description: "A list of 3-4 of the most discussed or prevalent diseases in the city based on recent public data.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING, description: "Name of the disease (e.g., 'Influenza', 'Dengue Fever')." },
+                    summary: { type: Type.STRING, description: "A brief summary of the situation regarding this specific disease." },
+                    reportedCases: { type: Type.STRING, description: "An estimated or reported number of cases. Must be a descriptive string, not a number (e.g., 'Approximately 5,000 cases reported', 'Hundreds of cases weekly', 'Data not specified'). Do not invent numbers if not found." },
+                    affectedDemographics: { type: Type.STRING, description: "A text description of the most affected demographics (e.g., 'Primarily affecting children under 5', 'Higher incidence in elderly populations', 'No specific demographic reported')." },
+                    trend: { type: Type.STRING, enum: ['Increasing', 'Stable', 'Decreasing', 'Unknown'], description: "The recent trend of reported cases." }
+                },
+                required: ["name", "summary", "reportedCases", "affectedDemographics", "trend"]
+            }
+        },
+        dataDisclaimer: { type: Type.STRING, description: "A mandatory disclaimer about the nature of the data." }
+    },
+    required: ["cityName", "country", "lastUpdated", "overallSummary", "diseases", "dataDisclaimer"]
+};
+
+export const getCityHealthSnapshot = async (cityName: string, country: string): Promise<CityHealthSnapshot> => {
+    const groundingPrompt = `Act as a public health intelligence analyst. Your task is to use Google Search to gather the most recent, publicly available information (from news, health ministries, WHO reports from the last 30-60 days) on infectious and prevalent diseases for the city of ${cityName}, ${country}. Your goal is to create a concise public health snapshot. Collect information on the 3-4 most discussed diseases, including a summary, trend, estimated cases, and affected demographics. Also find a brief overall summary.`;
+
+    // Step 1: Grounded call to get raw information
+    const groundingResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: groundingPrompt,
+        config: {
+            tools: [{ googleSearch: {} }],
+        }
+    });
+
+    const structuringPrompt = `Based on the following public health information for ${cityName}, ${country}, format it into a single, valid JSON object that conforms to the provided schema.
+
+Information:
+${groundingResponse.text}
+
+Instructions:
+1.  Identify the 3-4 most discussed or significant diseases.
+2.  For each disease, provide a brief summary, the recent trend ('Increasing', 'Stable', 'Decreasing', or 'Unknown'), an *estimation* of reported cases (as a descriptive string, e.g., 'Hundreds of cases', not a precise number), and describe the most affected demographics.
+3.  Write a brief overall summary of the city's current health situation.
+4.  For the 'lastUpdated' field, use "Data based on reports from the last 30-60 days".
+5.  For the 'dataDisclaimer' field, you MUST use this exact text: "This is an AI-generated summary of publicly available information and is not real-time, verified medical data. Consult official public health sources for accurate statistics."
+`;
+    
+    // Step 2: Structuring call to get JSON
+    const structuringResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: structuringPrompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: cityHealthSnapshotSchema,
+        }
+    });
+
+
+    try {
+        const jsonText = structuringResponse.text.trim();
+        const snapshotData = JSON.parse(jsonText) as Omit<CityHealthSnapshot, 'sources'>;
+
+        const sources: AlertSource[] = (groundingResponse.candidates?.[0]?.groundingMetadata?.groundingChunks || [])
+            .map((chunk: any) => ({
+                uri: chunk.web.uri,
+                title: chunk.web.title,
+            }))
+            .filter(source => source.uri && source.title);
+
+        return {
+            ...snapshotData,
+            sources: sources,
+        };
+    } catch (e) {
+        console.error("Failed to parse city health snapshot response:", structuringResponse.text, e);
+        throw new Error("The model returned an invalid data format for the city health snapshot.");
+    }
 };

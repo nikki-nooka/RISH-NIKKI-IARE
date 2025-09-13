@@ -1,39 +1,27 @@
-
-
-
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeftIcon, BrainCircuitIcon, SendIcon } from './icons';
+import { BrainCircuitIcon, SendIcon } from './icons';
 import { analyzeMentalHealth } from '../services/geminiService';
 import type { MentalHealthResult, ActivityLogItem } from '../types';
 import { MentalHealthReport } from './MentalHealthReport';
 import { LoadingSpinner } from './LoadingSpinner';
+import { BackButton } from './BackButton';
 
 interface MentalHealthPageProps {
   onBack: () => void;
   onAnalysisComplete: (item: Omit<ActivityLogItem, 'id' | 'timestamp' | 'userPhone'>) => void;
 }
 
-// Expanded question bank for variety
 const QUESTION_BANK = [
-    { id: 'q1', text: 'Over the last two weeks, how often have you felt little interest or pleasure in doing things?' },
-    { id: 'q2', text: 'How often have you been feeling down, depressed, or hopeless recently?' },
-    { id: 'q3', text: 'Have you had trouble falling or staying asleep, or been sleeping too much?' },
-    { id: 'q4', text: 'In the past two weeks, how often have you felt tired or had little energy?' },
-    { id: 'q5', text: 'How often have you felt nervous, anxious, or on edge lately?' },
-    { id: 'q6', text: 'Have you been unable to stop or control worrying?' },
-    { id: 'q7', text: 'How often have you felt confident and capable in your daily life?' },
-    { id: 'q8', text: 'Have you felt particularly irritable or easily annoyed in the past two weeks?' },
-    { id: 'q9', text: 'How connected have you felt to other people recently?' },
-    { id: 'q10', text: 'Have you been able to relax and unwind when you have the chance?' },
-    { id: 'q11', text: 'How has your appetite been over the last two weeks? (e.g., poor appetite or overeating)' },
-    { id: 'q12', text: 'How often have you felt that things were piling up so high that you could not overcome them?' },
-];
-
-const options = [
-    'Not at all',
-    'Several days',
-    'More than half the days',
-    'Nearly every day'
+    { id: 'q1', text: "What do you usually do when you're feeling mentally drained?", options: ["Push through and keep working", "Take a short break", "Disconnect from screens", "Do something creative or relaxing"] },
+    { id: 'q2', text: "Which of these best describes your thoughts most days?", options: ["Mostly negative or self-critical", "Neutral, just going through the motions", "Positive but with occasional doubts", "Optimistic and self-encouraging"] },
+    { id: 'q3', text: "When was the last time you did something just for fun?", options: ["I can’t remember", "More than a week ago", "A few days ago", "Today or yesterday"] },
+    { id: 'q4', text: "How do you handle mistakes or failures?", options: ["I beat myself up over them", "I avoid thinking about them", "I reflect and try to learn from them", "I accept them as part of growth"] },
+    { id: 'q5', text: "What is your current energy level most of the time?", options: ["Completely exhausted", "Low and sluggish", "Manageable but not great", "Energized and motivated"] },
+    { id: 'q6', text: "How often do you check in with your emotions or mood?", options: ["Rarely", "Occasionally", "Most days", "Daily and intentionally"] },
+    { id: 'q7', text: "What’s your relationship with social media like?", options: ["It increases my stress or anxiety", "I scroll mindlessly out of habit", "I try to use it in moderation", "I use it intentionally or rarely"] },
+    { id: 'q8', text: "Which of the following do you do regularly to support your mental health?", options: ["Nothing in particular", "Exercise or movement", "Journaling or mindfulness", "Talking to someone or seeking help"] },
+    { id: 'q9', text: "When do you usually notice signs of burnout or emotional fatigue?", options: ["When it’s already too late", "After feeling off for a while", "As soon as my routine feels overwhelming", "I check in regularly and make adjustments"] },
+    { id: 'q10', text: "What kind of support system do you have?", options: ["I feel like I have no one to talk to", "I have a few people but don’t reach out often", "I have people I can rely on when needed", "I have strong, regular support from others"] },
 ];
 
 const NUM_QUESTIONS_TO_ASK = 6;
@@ -152,7 +140,7 @@ export const MentalHealthPage: React.FC<MentalHealthPageProps> = ({ onBack, onAn
                         </div>
                         
                         <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                             {options.map(opt => (
+                             {currentQuestion.options.map(opt => (
                                 <button 
                                     key={opt} 
                                     onClick={() => handleAnswerSelect(currentQuestion.id, opt)}
@@ -205,21 +193,16 @@ export const MentalHealthPage: React.FC<MentalHealthPageProps> = ({ onBack, onAn
         <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center animate-fade-in bg-indigo-50">
              <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
 
-            <div className="w-full flex justify-between items-center max-w-4xl mx-auto relative z-10">
-                 <div className="flex items-center gap-3">
+            <div className="w-full max-w-2xl mx-auto relative z-10">
+                <div className="mb-6">
+                    <BackButton onClick={onBack} />
+                </div>
+                <div className="flex items-center gap-3 justify-center text-center">
                     <BrainCircuitIcon className="w-8 h-8 text-indigo-500" />
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight hidden sm:block">
+                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
                         Mental Wellness Check-in
                     </h1>
                 </div>
-                <button 
-                    onClick={onBack}
-                    className="bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white"
-                    aria-label="Back to Welcome Page"
-                >
-                    <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                    Back
-                </button>
             </div>
             
             <main className="w-full max-w-2xl mx-auto mt-8 flex-grow flex items-center justify-center">

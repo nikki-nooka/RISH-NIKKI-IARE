@@ -1,15 +1,19 @@
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Globe from 'react-globe.gl';
-import { analyzeLocationByCoordinates, geocodeLocation } from '../services/geminiService';
-import type { LocationAnalysisResult, MapPoint, Facility } from '../types';
+import { analyzeLocationByCoordinates, geocodeLocation, getCityHealthSnapshot } from '../services/geminiService';
+import type { LocationAnalysisResult, MapPoint, Facility, CityHealthSnapshot } from '../types';
 import { LocationReport } from './LocationReport';
-import { ArrowLeftIcon, MapPinIcon, MagnifyingGlassIcon, CloseIcon } from './icons';
+import { CityHealthReport } from './CityHealthReport';
+import { MapPinIcon, MagnifyingGlassIcon, CloseIcon } from './icons';
 import { LoadingSpinner } from './LoadingSpinner';
+import { majorCities, City } from '../data/cities';
+import { BackButton } from './BackButton';
 
 export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [analysis, setAnalysis] = useState<{ result: LocationAnalysisResult, imageUrl: string | null } | null>(null);
+  const [locationAnalysis, setLocationAnalysis] = useState<{ result: LocationAnalysisResult, imageUrl: string | null } | null>(null);
+  const [citySnapshot, setCitySnapshot] = useState<CityHealthSnapshot | null>(null);
+  const [analysisType, setAnalysisType] = useState<'location' | 'city' | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -27,6 +31,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [geocodedName, setGeocodedName] = useState<string | null>(null);
 
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
+  const [panelTitle, setPanelTitle] = useState('Analysis');
 
   useEffect(() => {
     const handleResize = () => {
@@ -49,24 +54,32 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       globeEl.current.pointOfView({ altitude: 3.5 }, 0);
     }
   }, [isGlobeReady]);
+  
+  const openPanel = (title: string) => {
+    setPanelTitle(title);
+    setIsPanelOpen(true);
+    setIsLoading(true);
+    setError(null);
+    setMapPoints([]);
+    setLocationAnalysis(null);
+    setCitySnapshot(null);
+  };
 
-  const startAnalysis = useCallback(async (lat: number, lng: number, locationName?: string) => {
+  const startLocationAnalysis = useCallback(async (lat: number, lng: number, locationName?: string) => {
     if (isLoading) return;
 
     if (globeEl.current) {
       globeEl.current.pointOfView({ lat, lng, altitude: 1.5 }, 1000);
     }
     
-    setMapPoints([]);
     setClickedCoords({ lat, lng });
-    setIsPanelOpen(true);
-    setIsLoading(true);
-    setError(null);
-    setAnalysis(null);
+    setAnalysisType('location');
+    openPanel(locationName || 'Location Analysis');
 
     try {
       const { analysis, imageUrl } = await analyzeLocationByCoordinates(lat, lng, locationName);
-      setAnalysis({ result: analysis, imageUrl: imageUrl });
+      setLocationAnalysis({ result: analysis, imageUrl: imageUrl });
+      setPanelTitle(analysis.locationName);
     } catch (err) {
       console.error(err);
       setError('Failed to analyze the location. The AI model may be unavailable or the request was blocked. Please try another location.');
@@ -75,10 +88,32 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   }, [isLoading]);
 
+  const startCityAnalysis = useCallback(async (city: City) => {
+    if (isLoading) return;
+
+    if (globeEl.current) {
+        globeEl.current.pointOfView({ lat: city.lat, lng: city.lng, altitude: 1.5 }, 1000);
+    }
+
+    setClickedCoords({ lat: city.lat, lng: city.lng });
+    setAnalysisType('city');
+    openPanel(`Health Snapshot: ${city.name}`);
+    
+    try {
+        const snapshot = await getCityHealthSnapshot(city.name, city.country);
+        setCitySnapshot(snapshot);
+    } catch (err) {
+        console.error(err);
+        setError('Failed to generate the city health snapshot. The AI model may be busy or recent data could not be found. Please try again later.');
+    } finally {
+        setIsLoading(false);
+    }
+  }, [isLoading]);
+
   const handleGlobeClick = useCallback(({ lat, lng }: { lat: number, lng: number }) => {
     setGeocodedName(null);
-    startAnalysis(lat, lng);
-  }, [startAnalysis]);
+    startLocationAnalysis(lat, lng);
+  }, [startLocationAnalysis]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +126,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     try {
         const { lat, lng, foundLocationName } = await geocodeLocation(searchQuery);
         setGeocodedName(foundLocationName);
-        startAnalysis(lat, lng, foundLocationName);
+        startLocationAnalysis(lat, lng, foundLocationName);
     } catch (err) {
         console.error("Geocoding error:", err);
         setSearchError("Could not find that location. Please try a different name.");
@@ -106,6 +141,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       setSearchError(null);
       setGeocodedName(null);
       setMapPoints([]);
+      setAnalysisType(null);
   }
 
   const handleFacilitiesFound = (facilities: Omit<Facility, 'distance'>[]) => {
@@ -113,7 +149,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           const analysisPoint: MapPoint = {
               lat: clickedCoords.lat,
               lng: clickedCoords.lng,
-              name: geocodedName || 'Analyzed Location',
+              name: geocodedName || locationAnalysis?.result.locationName || 'Analyzed Location',
               kind: 'analysis_point'
           };
           const facilityPoints: MapPoint[] = facilities.map(f => ({
@@ -140,6 +176,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             atmosphereColor="lightblue"
             atmosphereAltitude={0.25}
             onGlobeReady={() => setIsGlobeReady(true)}
+            
             pointsData={mapPoints}
             pointLat="lat"
             pointLng="lng"
@@ -167,20 +204,28 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     containerRef.current.style.cursor = point ? 'pointer' : 'default';
                 }
             }}
+            
+            labelsData={majorCities}
+            labelLat="lat"
+            labelLng="lng"
+            labelText="name"
+            labelSize={0.45}
+            labelDotRadius={0.2}
+            labelColor={() => 'rgba(255, 255, 255, 0.85)'}
+            labelResolution={2}
+            onLabelClick={(label: object) => startCityAnalysis(label as City)}
+            onLabelHover={(label: object | null) => {
+                 if (containerRef.current) {
+                    containerRef.current.style.cursor = label ? 'pointer' : 'default';
+                }
+            }}
           />
       )}
 
       {/* Header: Back Button and Search Bar */}
       <div className={`absolute top-4 left-4 right-4 flex items-center gap-2 sm:gap-4 transition-opacity duration-500 z-20 ${isPanelOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
         {/* Back Button */}
-        <button 
-          onClick={onBack}
-          className="bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-3 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white flex-shrink-0"
-          aria-label="Back to Welcome Page"
-        >
-          <ArrowLeftIcon className="w-5 h-5 sm:mr-2" />
-          <span className="hidden sm:inline">Back</span>
-        </button>
+        <BackButton onClick={onBack} className="bg-white/80 backdrop-blur-md flex-shrink-0" />
 
         {/* Search Bar */}
         <div className="flex-grow min-w-0">
@@ -211,7 +256,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="h-full flex flex-col">
             <div className="flex-shrink-0 p-4 border-b border-slate-200 flex justify-between items-center">
                 <h2 className="text-lg font-bold text-slate-800 truncate pr-2">
-                    {analysis?.result.locationName || geocodedName || 'Location Analysis'}
+                    {panelTitle}
                 </h2>
                 <button onClick={closePanel} className="p-2 rounded-full hover:bg-slate-200 flex-shrink-0">
                     <CloseIcon className="w-6 h-6 text-slate-600" />
@@ -221,8 +266,12 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 {isLoading && (
                     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                         <LoadingSpinner />
-                        <p className="mt-4 text-slate-600 font-semibold">Analyzing Location...</p>
-                        <p className="mt-1 text-sm text-slate-500">Generating report and satellite image.</p>
+                        <p className="mt-4 text-slate-600 font-semibold">
+                            {analysisType === 'city' ? 'Generating Health Snapshot...' : 'Analyzing Location...'}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                             {analysisType === 'city' ? 'Compiling latest public health data...' : 'Generating report and satellite image.'}
+                        </p>
                     </div>
                 )}
                 {error && (
@@ -231,7 +280,8 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         <p>{error}</p>
                     </div>
                 )}
-                {analysis && clickedCoords && <LocationReport result={analysis.result} imageUrl={analysis.imageUrl} coords={clickedCoords} onFacilitiesFound={handleFacilitiesFound} />}
+                {locationAnalysis && analysisType === 'location' && clickedCoords && <LocationReport result={locationAnalysis.result} imageUrl={locationAnalysis.imageUrl} coords={clickedCoords} onFacilitiesFound={handleFacilitiesFound} />}
+                {citySnapshot && analysisType === 'city' && <CityHealthReport snapshot={citySnapshot} />}
             </div>
         </div>
       </div>
@@ -240,7 +290,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className={`absolute bottom-20 left-1/2 -translate-x-1/2 animate-fade-in-up transition-opacity duration-500 z-10 ${isPanelOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           <div className="bg-white/80 backdrop-blur-md py-2 px-4 rounded-full shadow-lg flex items-center gap-2">
               <MapPinIcon className="w-5 h-5 text-blue-500"/>
-              <p className="text-sm text-slate-700 font-medium">Click on the globe or search to begin analysis.</p>
+              <p className="text-sm text-slate-700 font-medium">Click on the globe or a city to begin analysis.</p>
           </div>
       </div>
     </div>

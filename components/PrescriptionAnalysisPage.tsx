@@ -1,13 +1,15 @@
 
 
 
+
 import React, { useState, useEffect } from 'react';
 import { ImageUploader } from './ImageUploader';
 import { ReportSkeleton } from './ReportSkeleton';
 import { analyzePrescription } from '../services/geminiService';
 import type { PrescriptionAnalysisResult, ActivityLogItem } from '../types';
-import { ArrowLeftIcon, ClipboardListIcon, ScanIcon, CloseIcon } from './icons';
+import { ClipboardListIcon, ScanIcon, CloseIcon } from './icons';
 import { PrescriptionReport } from './PrescriptionReport';
+import { BackButton } from './BackButton';
 
 interface PrescriptionAnalysisPageProps {
   onBack: () => void;
@@ -68,15 +70,10 @@ export const PrescriptionAnalysisPage: React.FC<PrescriptionAnalysisPageProps> =
   }
 
   return (
-    <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center animate-fade-in">
-        <button 
-            onClick={onBack}
-            className="absolute top-4 left-4 bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white z-10"
-            aria-label="Back to Welcome Page"
-          >
-            <ArrowLeftIcon className="w-5 h-5 mr-2" />
-            Back
-        </button>
+    <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col animate-fade-in">
+        <div className="w-full max-w-7xl mx-auto self-start mb-6">
+            <BackButton onClick={onBack} />
+        </div>
 
         <header className="text-center w-full max-w-4xl mx-auto animate-fade-in">
             <div className="flex items-center justify-center gap-3">

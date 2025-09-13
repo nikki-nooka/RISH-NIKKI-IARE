@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { geocodeLocation, findFacilitiesByCoordinates } from '../services/geminiService';
-import { ArrowLeftIcon, HeartPulseIcon, BuildingOfficeIcon, UserIcon, SendIcon, DirectionsIcon, MagnifyingGlassIcon, CrosshairsIcon, CheckCircleIcon } from './icons';
+import { HeartPulseIcon, BuildingOfficeIcon, UserIcon, SendIcon, DirectionsIcon, MagnifyingGlassIcon, CrosshairsIcon, CheckCircleIcon } from './icons';
 import { LoadingSpinner } from './LoadingSpinner';
 import type { Facility } from '../types';
+import { BackButton } from './BackButton';
 
 interface CheckupPageProps {
   onBack: () => void;
@@ -177,14 +178,7 @@ export const CheckupPage: React.FC<CheckupPageProps> = ({ onBack }) => {
   return (
     <div className="w-full min-h-screen flex flex-col p-4 sm:p-6 lg:p-8 animate-fade-in bg-slate-50">
         <header className="w-full max-w-6xl mx-auto flex justify-start items-center">
-            <button 
-                onClick={onBack}
-                className="bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg hover:bg-white"
-                aria-label="Back to Analysis"
-            >
-                <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                Back to Report
-            </button>
+            <BackButton onClick={onBack}>Back to Report</BackButton>
         </header>
 
         <main className="flex-grow flex flex-col items-center mt-8">

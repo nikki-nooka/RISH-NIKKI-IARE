@@ -1,7 +1,6 @@
 
-
 import React, { useState } from 'react';
-import { CloseIcon, GlobeIcon, PhoneIcon, LockClosedIcon, UserIcon, CalendarIcon } from './icons';
+import { CloseIcon, GlobeIcon, PhoneIcon, LockClosedIcon, UserIcon, CalendarIcon, AtSymbolIcon } from './icons';
 import RotatingGlobe from './RotatingGlobe';
 import type { User } from '../types';
 
@@ -17,12 +16,15 @@ type ViewMode = 'login' | 'signup';
 export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('login');
   
-  // Form State
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [email, setEmail] = useState('');
+  const [gender, setGender] = useState('');
+  const [place, setPlace] = useState('');
   
   const [error, setError] = useState<string>('');
   const [infoMessage, setInfoMessage] = useState<string>('');
@@ -36,6 +38,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
     setDateOfBirth('');
     setConfirmPassword('');
     setInfoMessage('');
+    setLoginIdentifier('');
+    setEmail('');
+    setGender('');
+    setPlace('');
   }
   
   const handleLogin = async (e: React.FormEvent) => {
@@ -44,24 +50,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
     setIsLoading(true);
 
     try {
-        // Simulate async operation for better UX
         await new Promise(res => setTimeout(res, 500));
         const allUsers: any[] = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-        const foundUser = allUsers.find(u => u.phone === phone.trim());
+        const identifier = loginIdentifier.trim().toLowerCase();
+        const foundUser = allUsers.find(u => u.phone === identifier || (u.email && u.email.toLowerCase() === identifier));
 
         if (foundUser) {
-            // User exists, check password
             if (foundUser.password === password) {
-                const { password, ...userDetails } = foundUser;
-                onAuthSuccess(userDetails);
+                onAuthSuccess(foundUser);
             } else {
                 throw new Error('Incorrect password. Please try again.');
             }
         } else {
-            // User does not exist, navigate to signup form.
-            // The entered phone number is kept.
-            setPassword('');
-            setInfoMessage("We couldn't find an account with this phone number. Please sign up to continue.");
+            setInfoMessage("We couldn't find an account with this phone number or email. Please sign up to continue.");
             setViewMode('signup');
         }
     } catch (err: any) {
@@ -75,39 +76,52 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const adminEmail = 'nookanikshithllpsdsnr@gmail.com';
+    if (email.trim().toLowerCase() === adminEmail) {
+        setError('This email address is reserved and cannot be used for signup.');
+        return;
+    }
+
     if (password !== confirmPassword) {
         setError("Passwords do not match.");
         return;
     }
     if (!name.trim() || !phone.trim() || !dateOfBirth || !password) {
-        setError("Please fill out all required fields.");
+        setError("Please fill out all required fields: Full Name, Phone, Date of Birth, and Password.");
         return;
     }
     setIsLoading(true);
     
     try {
-        // Simulate async operation for better UX
         await new Promise(res => setTimeout(res, 500));
         const allUsers: any[] = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
 
-        const userExists = allUsers.some(u => u.phone === phone.trim());
-        if (userExists) {
+        const phoneExists = allUsers.some(u => u.phone === phone.trim());
+        if (phoneExists) {
             throw new Error('This phone number is already registered.');
         }
         
-        const newUser = {
+        const emailExists = email.trim() && allUsers.some(u => u.email && u.email.toLowerCase() === email.trim().toLowerCase());
+        if (emailExists) {
+            throw new Error('This email address is already registered.');
+        }
+        
+        const newUser: User = {
             phone: phone.trim(),
             name: name.trim(),
+            email: email.trim() || null,
             date_of_birth: dateOfBirth,
-            password: password, // Storing password in localStorage for demo purposes
+            gender: gender || null,
+            place: place.trim() || null,
+            password: password,
             created_at: new Date().toISOString(),
         };
         
         allUsers.push(newUser);
         localStorage.setItem(USERS_KEY, JSON.stringify(allUsers));
 
-        const { password: _, ...userDetails } = newUser;
-        onAuthSuccess(userDetails);
+        onAuthSuccess(newUser);
 
     } catch (err: any) {
          console.error("Sign up error:", err);
@@ -122,40 +136,68 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
 
   const renderSignUpForm = () => (
      <form onSubmit={handleSignUp} className="space-y-4">
-        <div>
-            <label htmlFor="name-signup" className="sr-only">Full Name</label>
-            <div className="relative">
-                <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input id="name-signup" type="text" value={name} onChange={(e) => setName(e.target.value)} required className={inputClasses} placeholder="Full Name" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label htmlFor="name-signup" className="sr-only">Full Name</label>
+                <div className="relative">
+                    <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input id="name-signup" type="text" value={name} onChange={(e) => setName(e.target.value)} required className={inputClasses} placeholder="Full Name *" />
+                </div>
+            </div>
+            <div>
+                <label htmlFor="phone-signup" className="sr-only">Phone Number</label>
+                <div className="relative">
+                    <PhoneIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input id="phone-signup" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} placeholder="Phone Number *" />
+                </div>
             </div>
         </div>
         <div>
-            <label htmlFor="phone-signup" className="sr-only">Phone Number</label>
+            <label htmlFor="email-signup" className="sr-only">Email Address</label>
             <div className="relative">
-                <PhoneIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input id="phone-signup" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} placeholder="Phone Number" />
+                <AtSymbolIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input id="email-signup" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClasses} placeholder="Email Address (Optional)" />
+            </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label htmlFor="dob" className="sr-only">Date of Birth</label>
+                <div className="relative">
+                    <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input id="dob" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required className={inputClasses} placeholder="Date of Birth *" />
+                </div>
+            </div>
+            <div>
+                <label htmlFor="place-signup" className="sr-only">Place</label>
+                <div className="relative">
+                    <GlobeIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input id="place-signup" type="text" value={place} onChange={(e) => setPlace(e.target.value)} className={inputClasses} placeholder="Place (Optional)" />
+                </div>
             </div>
         </div>
         <div>
-            <label htmlFor="dob" className="sr-only">Date of Birth</label>
-            <div className="relative">
-                <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input id="dob" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} required className={inputClasses} placeholder="Date of Birth" />
-            </div>
+             <label htmlFor="gender-signup" className="sr-only">Gender</label>
+             <select id="gender-signup" value={gender} onChange={(e) => setGender(e.target.value)} className={`${inputClasses} pl-4`}>
+                <option value="">Select Gender (Optional)</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+            </select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label htmlFor="password-signup" className="sr-only">Password</label>
                 <div className="relative">
                     <LockClosedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input id="password-signup" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className={inputClasses} placeholder="Password" />
+                    <input id="password-signup" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className={inputClasses} placeholder="Password *" />
                 </div>
             </div>
              <div>
                 <label htmlFor="confirm-password-signup" className="sr-only">Confirm Password</label>
                 <div className="relative">
                     <LockClosedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input id="confirm-password-signup" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className={inputClasses} placeholder="Confirm Password" />
+                    <input id="confirm-password-signup" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className={inputClasses} placeholder="Confirm Password *" />
                 </div>
             </div>
         </div>
@@ -168,10 +210,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-4">
         <div>
-            <label htmlFor="phone" className="sr-only">Phone Number</label>
+            <label htmlFor="login-identifier" className="sr-only">Phone Number or Email</label>
             <div className="relative">
-                <PhoneIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className={inputClasses} placeholder="Phone Number" />
+                <AtSymbolIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input id="login-identifier" type="text" value={loginIdentifier} onChange={(e) => setLoginIdentifier(e.target.value)} required className={inputClasses} placeholder="Phone Number or Email" />
             </div>
         </div>
         <div>
@@ -180,6 +222,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
                 <LockClosedIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input id="password-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className={inputClasses} placeholder="Password" />
             </div>
+        </div>
+        <div className="text-right">
+            <button type="button" onClick={() => alert("A real app would email you a password reset link. Since this is a demo, please sign up again if you've forgotten your password.")} className="text-sm text-blue-600 hover:underline font-medium">
+                Forgot Password?
+            </button>
         </div>
         <button type="submit" disabled={isLoading} className={buttonClasses}>
             {isLoading ? 'Logging In...' : 'Login Securely'}

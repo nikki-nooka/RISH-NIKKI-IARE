@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getHealthForecast } from '../services/geminiService';
 import type { HealthForecast as HealthForecastData, RiskFactor } from '../types';
 import { HealthForecastSkeleton } from './HealthForecastSkeleton';
-import { ArrowLeftIcon, NewspaperIcon, PrecautionIcon, HazardIcon, SunIcon, WindIcon, SummaryIcon } from './icons';
+import { NewspaperIcon, PrecautionIcon, HazardIcon, SunIcon, WindIcon, SummaryIcon } from './icons';
+import { BackButton } from './BackButton';
 
 interface HealthForecastProps {
     onBack: () => void;
@@ -116,10 +117,13 @@ export const HealthForecast: React.FC<HealthForecastProps> = ({ onBack }) => {
     
     if (status === 'success' && forecast) {
         return (
-            <div className="w-full min-h-screen bg-slate-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="w-full min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in bg-slate-100/50">
                 <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg border border-slate-200/80">
+                     <div className="p-4 sm:p-6">
+                        <BackButton onClick={onBack} />
+                    </div>
                     {/* Header */}
-                    <div className="p-6 flex justify-between items-start">
+                    <div className="px-6 pb-6 flex items-start">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                                 <NewspaperIcon className="w-7 h-7 text-purple-600" />
@@ -129,10 +133,6 @@ export const HealthForecast: React.FC<HealthForecastProps> = ({ onBack }) => {
                                 <p className="text-slate-500">{forecast.locationName}</p>
                             </div>
                         </div>
-                        <button onClick={onBack} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-colors" aria-label="Back to main menu">
-                            <ArrowLeftIcon className="w-4 h-4 mr-2" />
-                            Back
-                        </button>
                     </div>
 
                     {/* Body */}

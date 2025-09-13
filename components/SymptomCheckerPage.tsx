@@ -1,10 +1,16 @@
 
+
+
+
+
+
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeftIcon, StethoscopeIcon, SendIcon, HazardIcon, MicrophoneIcon, ChevronDownIcon } from './icons';
+import { StethoscopeIcon, SendIcon, HazardIcon, MicrophoneIcon, ChevronDownIcon } from './icons';
 import { analyzeSymptoms } from '../services/geminiService';
 import type { SymptomAnalysisResult, ActivityLogItem } from '../types';
 import { SymptomAnalysisReport } from './SymptomAnalysisReport';
 import { SymptomReportSkeleton } from './SymptomReportSkeleton';
+import { BackButton } from './BackButton';
 
 interface SymptomCheckerPageProps {
   onBack: () => void;
@@ -140,7 +146,10 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
 
     return (
          <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center animate-fade-in bg-slate-50">
-            <div className="w-full flex justify-between items-center max-w-5xl mx-auto">
+            <div className="w-full max-w-3xl mx-auto">
+                <div className="mb-6">
+                    <BackButton onClick={onBack} />
+                </div>
                  <div className="flex items-center gap-3">
                     <StethoscopeIcon className="w-10 h-10 text-teal-500" />
                     <div>
@@ -149,14 +158,6 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                         </h1>
                     </div>
                 </div>
-                <button 
-                    onClick={onBack}
-                    className="bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white"
-                    aria-label="Back to Welcome Page"
-                >
-                    <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                    Back
-                </button>
             </div>
             
             <main className="w-full max-w-3xl mx-auto mt-8">

@@ -12,7 +12,7 @@
     "react-dom": "^19.1.0",
     "react": "^19.1.0",
     "@google/genai": "^1.8.0",
-    "three": "0.165.0",
+    "three": "^0.180.0",
     "react-globe.gl": "2.27.1"
   },
   "devDependencies": {

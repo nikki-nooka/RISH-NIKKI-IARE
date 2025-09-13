@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { getBotCommand } from '../services/geminiService';
 import type { ChatMessage, Page } from '../types';
-import { BotIcon, SendIcon, CloseIcon, ChevronDownIcon, MicrophoneIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from './icons';
+import { BotIcon, SendIcon, CloseIcon, ChevronDownIcon, MicrophoneIcon, SpeakerWaveIcon, SpeakerXMarkIcon, SparklesIcon } from './icons';
 
 interface ChatBotProps {
     onNavigate: (page: Page) => void;
@@ -238,10 +237,10 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
         <>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 transition-transform transform hover:scale-110 z-50 animate-pulse"
+                className="fixed bottom-6 right-6 bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 transition-transform transform hover:scale-110 z-50"
                 aria-label="Toggle Chatbot"
             >
-                {isOpen ? <CloseIcon className="w-7 h-7"/> : <BotIcon className="w-7 h-7" />}
+                {isOpen ? <CloseIcon className="w-7 h-7"/> : <SparklesIcon className="w-7 h-7" />}
             </button>
 
             {isOpen && (

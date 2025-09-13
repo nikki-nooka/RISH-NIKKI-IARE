@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect } from 'react';
 import { Header } from './Header';
 import { ImageUploader } from './ImageUploader';
@@ -8,7 +9,8 @@ import { AnalysisReport } from './AnalysisReport';
 import { ReportSkeleton } from './ReportSkeleton';
 import { analyzeImage } from '../services/geminiService';
 import type { AnalysisResult, ActivityLogItem } from '../types';
-import { ArrowLeftIcon, HeartPulseIcon, ScanIcon, CloseIcon } from './icons';
+import { HeartPulseIcon, ScanIcon, CloseIcon } from './icons';
+import { BackButton } from './BackButton';
 
 interface ImageAnalysisPageProps {
   onBack: () => void;
@@ -69,15 +71,10 @@ export const ImageAnalysisPage: React.FC<ImageAnalysisPageProps> = ({ onBack, on
   }
 
   return (
-    <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center animate-fade-in">
-        <button 
-            onClick={onBack}
-            className="absolute top-4 left-4 bg-white/80 backdrop-blur-md text-slate-700 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl hover:bg-white z-10"
-            aria-label="Back to Welcome Page"
-          >
-            <ArrowLeftIcon className="w-5 h-5 mr-2" />
-            Back
-        </button>
+    <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col animate-fade-in">
+        <div className="w-full max-w-7xl mx-auto self-start mb-6">
+            <BackButton onClick={onBack} />
+        </div>
 
         <Header />
 

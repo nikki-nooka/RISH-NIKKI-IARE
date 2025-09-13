@@ -1,80 +1,89 @@
-
-
+export type Page =
+  | 'home'
+  | 'welcome'
+  | 'image-analysis'
+  | 'prescription-analysis'
+  | 'checkup'
+  | 'mental-health'
+  | 'symptom-checker'
+  | 'about'
+  | 'contact'
+  | 'explore'
+  | 'live-alerts'
+  | 'health-briefing'
+  | 'activity-history'
+  | 'profile'
+  | 'admin-dashboard'
+  | 'water-log';
 
 export interface User {
-  phone: string; // Used as the unique username
+  phone: string;
   name: string;
-  date_of_birth: string;
   email?: string | null;
+  date_of_birth?: string | null;
   gender?: string | null;
   place?: string | null;
-  created_at?: string;
-  last_login_at?: string;
+  created_at?: string | null;
+  last_login_at?: string | null;
+  password?: string;
+  isAdmin?: boolean;
 }
 
-export type Page = 'home' | 'about' | 'contact' | 'explore' | 'welcome' | 'image-analysis' | 'checkup' | 'prescription-analysis' | 'mental-health' | 'symptom-checker' | 'health-briefing' | 'activity-history' | 'admin-dashboard' | 'profile' | 'live-alerts';
-
-export type BotCommandAction = 'navigate' | 'speak';
-
-export interface BotCommandResponse {
-    action: BotCommandAction;
-    page?: Page;
-    responseText: string;
+export interface ActivityLogItem {
+  id: string;
+  timestamp: number;
+  userPhone: string;
+  type: 'image-analysis' | 'prescription-analysis' | 'mental-health' | 'symptom-checker' | 'login';
+  title: string;
+  data: any;
+  language?: string;
 }
-
 
 export interface Hazard {
-    hazard: string;
-    description: string;
+  hazard: string;
+  description: string;
 }
 
 export interface Disease {
-    name: string;
-    cause: string;
-    precautions: string[];
+  name: string;
+  cause: string;
+  precautions: string[];
 }
 
 export interface AnalysisResult {
-    hazards: Hazard[];
-    diseases: Disease[];
-    summary: string;
+  hazards: Hazard[];
+  diseases: Disease[];
+  summary: string;
 }
 
 export interface LocationAnalysisResult extends AnalysisResult {
-    locationName: string;
-}
-
-export interface ChatMessage {
-    id: string;
-    role: 'user' | 'bot';
-    text: string;
+  locationName: string;
 }
 
 export interface Facility {
-  name: string;
-  type: 'Hospital' | 'Pharmacy' | 'Clinic';
-  lat: number;
-  lng: number;
-  distance?: string;
+    name: string;
+    type: 'Hospital' | 'Clinic' | 'Pharmacy';
+    lat: number;
+    lng: number;
+    distance: string; // e.g., "1.2 km"
 }
 
-export interface MapPoint {
-  lat: number;
-  lng: number;
-  name: string;
-  kind: 'analysis_point' | 'facility';
-  type?: 'Hospital' | 'Pharmacy' | 'Clinic';
-}
+export type MapPoint = {
+    lat: number;
+    lng: number;
+    name: string;
+    kind: 'analysis_point' | 'facility';
+    type?: Facility['type'];
+};
 
-export interface Medicine {
-  name: string;
-  dosage: string;
-}
 
 export interface PrescriptionAnalysisResult {
-  summary: string;
-  medicines: Medicine[];
-  precautions: string[];
+    summary: string;
+    medicines: {
+        name: string;
+        dosage: string;
+    }[];
+    precautions: string[];
 }
 
 export interface RiskFactor {
@@ -90,45 +99,40 @@ export interface HealthForecast {
     recommendations: string[];
 }
 
-export interface CopingStrategy {
-  title: string;
-  description: string;
-}
-
-export interface PotentialConcern {
-  name: string;
-  explanation: string;
-}
-
 export interface MentalHealthResult {
-  summary: string;
-  potentialConcerns: PotentialConcern[];
-  copingStrategies: CopingStrategy[];
-  recommendation: string;
-}
-
-export interface PotentialCondition {
-  name: string;
-  description: string;
+    summary: string;
+    potentialConcerns: {
+        name: string;
+        explanation: string;
+    }[];
+    copingStrategies: {
+        title: string;
+        description: string;
+    }[];
+    recommendation: string;
 }
 
 export interface SymptomAnalysisResult {
-  summary: string;
-  triageRecommendation: string;
-  potentialConditions: PotentialCondition[];
-  nextSteps: string[];
-  disclaimer: string;
+    summary: string;
+    triageRecommendation: string;
+    potentialConditions: {
+        name: string;
+        description: string;
+    }[];
+    nextSteps: string[];
+    disclaimer: string;
 }
 
-export interface ActivityLogItem {
+export interface BotCommandResponse {
+  action: 'navigate' | 'speak';
+  page?: Page;
+  responseText: string;
+}
+
+export interface ChatMessage {
   id: string;
-  type: 'image-analysis' | 'prescription-analysis' | 'mental-health' | 'symptom-checker' | 'login';
-  timestamp: number;
-  title: string;
-  userPhone: string;
-  data: AnalysisResult | PrescriptionAnalysisResult | MentalHealthResult | SymptomAnalysisResult | { message: string };
-  // FIX: Add optional language property for symptom checker history.
-  language?: string;
+  role: 'user' | 'bot';
+  text: string;
 }
 
 export type AlertCategory = 'disease' | 'air' | 'heat' | 'environmental' | 'other';
@@ -140,15 +144,57 @@ export interface AlertSource {
 
 export interface Alert {
     id: string;
+    fetchedAt: number;
     title: string;
     location: string;
+    country: string;
+    locationDetails?: string;
     category: AlertCategory;
     detailedInfo: string;
     threatAnalysis: string;
-    sources: AlertSource[];
     lat?: number;
     lng?: number;
-    locationDetails?: string;
-    country?: string;
-    fetchedAt: number;
+    sources: AlertSource[];
+}
+
+export interface DiseaseReport {
+    name: string;
+    summary: string;
+    reportedCases: string;
+    affectedDemographics: string;
+    trend: 'Increasing' | 'Stable' | 'Decreasing' | 'Unknown';
+}
+
+export interface CityHealthSnapshot {
+    cityName: string;
+    country: string;
+    lastUpdated: string;
+    overallSummary: string;
+    diseases: DiseaseReport[];
+    dataDisclaimer: string;
+    sources: AlertSource[];
+}
+
+export interface WaterLogEntry {
+  id: string;
+  timestamp: number;
+  amount: number; // in ml
+}
+
+export interface WaterLogSettings {
+  goal: number; // in ml
+  notifications: {
+    enabled: boolean;
+    startTime: string; // "HH:mm" format
+    endTime: string;   // "HH:mm" format
+    frequency: number; // in minutes
+  };
+}
+
+export interface FeedbackItem {
+  id: string;
+  timestamp: number;
+  userPhone: string;
+  rating: number; // 1-5
+  comment: string;
 }

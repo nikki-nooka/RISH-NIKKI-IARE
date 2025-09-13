@@ -57,9 +57,11 @@ export const AlertsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchAlerts();
-        const interval = setInterval(() => fetchAlerts(true), 300000); // 5 minutes
-        return () => clearInterval(interval);
+        // fetchAlerts();
+        // const interval = setInterval(() => fetchAlerts(true), 300000); // 5 minutes
+        // return () => clearInterval(interval);
+        setIsLoading(false);
+        setError("Live health alerts are temporarily disabled to conserve resources.");
     }, []);
 
     return (
@@ -74,7 +76,7 @@ export const AlertsPage: React.FC = () => {
                     </div>
                      <button
                         onClick={() => fetchAlerts(true)}
-                        disabled={isLoading}
+                        disabled={true}
                         className="bg-white hover:bg-slate-100 text-blue-500 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm border border-blue-200 disabled:opacity-50"
                      >
                          <svg className={`w-5 h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
