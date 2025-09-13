@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { AnalysisResult, LocationAnalysisResult, Facility, PrescriptionAnalysisResult, HealthForecast, MentalHealthResult, SymptomAnalysisResult, Page, BotCommandResponse, Alert, AlertSource, CityHealthSnapshot } from '../types';
+import type { AnalysisResult, LocationAnalysisResult, Facility, PrescriptionAnalysisResult, HealthForecast, MentalHealthResult, SymptomAnalysisResult, Page, BotCommandResponse, Alert, AlertSource, CityHealthSnapshot, AlertCategory } from '../types';
+import * as cache from './cacheService';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable not set");
@@ -49,6 +50,12 @@ const locationAnalysisSchema = {
 };
 
 export const analyzeLocationByCoordinates = async (lat: number, lng: number, language: string, knownLocationName?: string): Promise<{ analysis: LocationAnalysisResult, imageUrl: string | null }> => {
+    const cacheKey = `location_${lat.toFixed(4)}_${lng.toFixed(4)}_${language}_${knownLocationName || ''}`;
+    const cached = cache.get<{ analysis: LocationAnalysisResult, imageUrl: string | null }>(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
     let contents: string;
     const languageInstruction = `Your response must be a single JSON object conforming to the provided schema. All text content within the JSON must be in ${language}. Your analysis must be distinct and tailored, avoiding repetition for nearby coordinates.`;
     
@@ -119,8 +126,10 @@ export const analyzeLocationByCoordinates = async (lat: number, lng: number, lan
     } else {
         console.warn("Image generation failed:", imageResult.reason);
     }
-
-    return { analysis, imageUrl };
+    
+    const result = { analysis, imageUrl };
+    cache.set(cacheKey, result, 10); // Cache for 10 minutes
+    return result;
 };
 
 const analysisSchema = {
@@ -345,6 +354,12 @@ const geocodingSchema = {
 };
 
 export const geocodeLocation = async (locationQuery: string): Promise<{ lat: number, lng: number, foundLocationName: string }> => {
+    const cacheKey = `geocode_${locationQuery.toLowerCase().trim()}`;
+    const cached = cache.get<{ lat: number, lng: number, foundLocationName: string }>(cacheKey);
+    if (cached) {
+        return cached;
+    }
+    
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Find the precise geographic coordinates (latitude and longitude) and the full, official name for the following location: "${locationQuery}". Prioritize accuracy. Respond only with the JSON object.`,
@@ -356,7 +371,9 @@ export const geocodeLocation = async (locationQuery: string): Promise<{ lat: num
 
     try {
         const jsonText = response.text.trim();
-        return JSON.parse(jsonText);
+        const result = JSON.parse(jsonText);
+        cache.set(cacheKey, result, 1440); // Cache for 24 hours
+        return result;
     } catch (e) {
         console.error("Failed to parse geocoding response:", response.text);
         throw new Error("The model returned an invalid data format for geocoding.");
@@ -379,6 +396,12 @@ const facilitiesSchema = {
 };
 
 export const findFacilitiesByCoordinates = async (coords: { lat: number; lng: number }): Promise<Omit<Facility, 'distance'>[]> => {
+    const cacheKey = `facilities_${coords.lat.toFixed(3)}_${coords.lng.toFixed(3)}`;
+    const cached = cache.get<Omit<Facility, 'distance'>[]>(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `You are a highly accurate, real-world mapping and location service. Your sole purpose is to identify real, existing medical facilities. Do not invent, hallucinate, or guess any locations. If you are unsure, return an empty list. Find up to 10 of the nearest medical facilities (types: 'Hospital', 'Clinic', 'Pharmacy') to the coordinates latitude ${coords.lat}, longitude ${coords.lng}. Provide their official names and precise coordinates. Return only real-world, verifiable locations.`,
@@ -390,7 +413,9 @@ export const findFacilitiesByCoordinates = async (coords: { lat: number; lng: nu
 
     try {
         const jsonText = response.text.trim();
-        return JSON.parse(jsonText) as Omit<Facility, 'distance'>[];
+        const result = JSON.parse(jsonText) as Omit<Facility, 'distance'>[];
+        cache.set(cacheKey, result, 60); // Cache for 1 hour
+        return result;
     } catch (e) {
         console.error("Failed to parse facilities response:", response.text);
         throw new Error("The model returned an invalid data format for facilities.");
@@ -425,6 +450,12 @@ const healthForecastSchema = {
 
 
 export const getHealthForecast = async (coords: { lat: number; lng: number }, language: string): Promise<HealthForecast> => {
+     const cacheKey = `forecast_${coords.lat.toFixed(2)}_${coords.lng.toFixed(2)}_${language}`;
+     const cached = cache.get<HealthForecast>(cacheKey);
+     if (cached) {
+         return cached;
+     }
+
      const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: `Generate a daily health forecast for the location at latitude ${coords.lat}, longitude ${coords.lng}. Identify the location name. Include a summary, at least 3 key risk factors (like Air Quality, UV Index, Pollen, Mosquito Activity) with a risk level ('Low', 'Moderate', 'High', 'Very High'), and provide simple, actionable recommendations. The entire response, including all text values inside the JSON, must be in the ${language} language.`,
@@ -436,7 +467,9 @@ export const getHealthForecast = async (coords: { lat: number; lng: number }, la
 
     try {
         const jsonText = response.text.trim();
-        return JSON.parse(jsonText) as HealthForecast;
+        const result = JSON.parse(jsonText) as HealthForecast;
+        cache.set(cacheKey, result, 240); // Cache for 4 hours
+        return result;
     } catch (e) {
         console.error("Failed to parse health forecast response:", response.text);
         throw new Error("The model returned an invalid data format for the health forecast.");
@@ -558,7 +591,7 @@ export const analyzeSymptoms = async (symptoms: string, language: string): Promi
 
 const liveAlertsSchema = {
     type: Type.ARRAY,
-    description: "A list of 8 recent, real-world global health alerts.",
+    description: "A list of recent, real-world global health alerts.",
     items: {
         type: Type.OBJECT,
         properties: {
@@ -576,7 +609,13 @@ const liveAlertsSchema = {
     }
 };
 
-export const getLiveHealthAlerts = async (): Promise<Alert[]> => {
+export const getLiveHealthAlerts = async (forceRefresh: boolean = false): Promise<Alert[]> => {
+    const cacheKey = 'global_alerts';
+    if (!forceRefresh) {
+        const cached = cache.get<Alert[]>(cacheKey);
+        if (cached) return cached;
+    }
+
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: "Act as a global health surveillance system. Use Google Search to find 8 of the most recent and significant real-world public health alerts from around the world from the last 7 days. These can include disease outbreaks, severe air quality warnings, extreme weather events with health implications (like heatwaves), or major environmental health hazards. Extract the key information for each alert.",
@@ -596,7 +635,7 @@ export const getLiveHealthAlerts = async (): Promise<Alert[]> => {
         }
     });
 
-    let alertsData: Omit<Alert, 'id' | 'sources' | 'fetchedAt'>[] = [];
+    let alertsData: Omit<Alert, 'id' | 'sources' | 'fetchedAt' | 'source'>[] = [];
     try {
         const jsonText = structuringResponse.text.trim();
         alertsData = JSON.parse(jsonText);
@@ -605,16 +644,13 @@ export const getLiveHealthAlerts = async (): Promise<Alert[]> => {
         throw new Error("The model returned an invalid data format for the health alerts.");
     }
 
-    // Geocode any alerts that are missing coordinates
     const geocodingPromises = alertsData.map(alert => {
-        if (alert.lat && alert.lng) {
-            return Promise.resolve(alert); // Coordinates already exist
-        }
+        if (alert.lat && alert.lng) return Promise.resolve(alert);
         return geocodeLocation(alert.location)
             .then(coords => ({ ...alert, lat: coords.lat, lng: coords.lng }))
             .catch(err => {
                 console.warn(`Geocoding failed for "${alert.location}":`, err);
-                return alert; // Return original alert if geocoding fails
+                return alert;
             });
     });
 
@@ -628,14 +664,98 @@ export const getLiveHealthAlerts = async (): Promise<Alert[]> => {
         .filter(source => source.uri && source.title);
 
     const fetchedTimestamp = Date.now();
-    // Attach sources to each alert and add a unique ID and timestamp
-    return geocodedAlerts.map((alert, index) => ({
+    // FIX: Explicitly type finalAlerts as Alert[] to ensure type compatibility for the 'source' property.
+    const finalAlerts: Alert[] = geocodedAlerts.map((alert, index) => ({
         ...alert,
         id: new Date().toISOString() + index,
         sources: sources,
         fetchedAt: fetchedTimestamp,
+        source: 'global',
     }));
+
+    cache.set(cacheKey, finalAlerts, 15); // Cache for 15 minutes
+    return finalAlerts;
 };
+
+export const getLocalHealthAlerts = async (lat: number, lng: number, forceRefresh: boolean = false): Promise<Alert[]> => {
+    const cacheKey = `local_alerts_${lat.toFixed(2)}_${lng.toFixed(2)}`;
+    if (!forceRefresh) {
+        const cached = cache.get<Alert[]>(cacheKey);
+        if (cached) return cached;
+    }
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Act as a local health surveillance system. Use Google Search to find up to 4 of the most recent and significant public health alerts specifically relevant to the city or region at latitude ${lat}, longitude ${lng} from the last 7 days. Focus on localized events like specific air quality warnings, local disease clusters, or environmental issues for this area. Extract key information for each alert.`,
+        config: {
+            tools: [{ googleSearch: {} }],
+        }
+    });
+
+    if (!response.text.trim()) {
+        cache.set(cacheKey, [], 15);
+        return [];
+    }
+    
+    const structuringResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: `Based on the following information, format it into a valid JSON array that adheres to the provided schema. If there is no information, return an empty array. Ensure every field is filled accurately. Text: ${response.text}`,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: liveAlertsSchema,
+        }
+    });
+
+    let alertsData: Omit<Alert, 'id' | 'sources' | 'fetchedAt' | 'source'>[] = [];
+    try {
+        const jsonText = structuringResponse.text.trim();
+        if (jsonText) {
+             alertsData = JSON.parse(jsonText);
+        }
+    } catch (e) {
+        console.error("Failed to parse JSON from local alerts response:", structuringResponse.text);
+        cache.set(cacheKey, [], 15);
+        return [];
+    }
+    
+    if (!Array.isArray(alertsData) || alertsData.length === 0) {
+        cache.set(cacheKey, [], 15);
+        return [];
+    }
+
+    const geocodingPromises = alertsData.map(alert => {
+        if (alert.lat && alert.lng) return Promise.resolve(alert);
+        return geocodeLocation(alert.location)
+            .then(coords => ({ ...alert, lat: coords.lat, lng: coords.lng }))
+            .catch(err => {
+                console.warn(`Geocoding failed for local alert "${alert.location}":`, err);
+                return alert;
+            });
+    });
+
+    const geocodedAlerts = await Promise.all(geocodingPromises);
+
+    const sources: AlertSource[] = (response.candidates?.[0]?.groundingMetadata?.groundingChunks || [])
+        .map((chunk: any) => ({
+            uri: chunk.web.uri,
+            title: chunk.web.title,
+        }))
+        .filter(source => source.uri && source.title);
+
+    const fetchedTimestamp = Date.now();
+    // FIX: Explicitly type finalAlerts as Alert[] to ensure type compatibility for the 'source' property.
+    const finalAlerts: Alert[] = geocodedAlerts.map((alert, index) => ({
+        ...alert,
+        id: new Date().toISOString() + '-local-' + index,
+        sources: sources,
+        fetchedAt: fetchedTimestamp,
+        source: 'local',
+    }));
+    
+    cache.set(cacheKey, finalAlerts, 15);
+    return finalAlerts;
+};
+
 
 const cityHealthSnapshotSchema = {
     type: Type.OBJECT,
@@ -665,9 +785,14 @@ const cityHealthSnapshotSchema = {
 };
 
 export const getCityHealthSnapshot = async (cityName: string, country: string, language: string): Promise<CityHealthSnapshot> => {
+    const cacheKey = `snapshot_${cityName.replace(' ','')}_${country.replace(' ','')}_${language}`;
+    const cached = cache.get<CityHealthSnapshot>(cacheKey);
+    if (cached) {
+        return cached;
+    }
+
     const groundingPrompt = `Act as a public health intelligence analyst. Your task is to use Google Search to gather the most recent, publicly available information (from news, health ministries, WHO reports from the last 30-60 days) on infectious and prevalent diseases for the city of ${cityName}, ${country}. Your goal is to create a concise public health snapshot. Collect information on the 3-4 most discussed diseases, including a summary, trend, estimated cases, and affected demographics. Also find a brief overall summary. The response must be in ${language}.`;
 
-    // Step 1: Grounded call to get raw information
     const groundingResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: groundingPrompt,
@@ -689,7 +814,6 @@ Instructions:
 5.  For the 'dataDisclaimer' field, you MUST use this exact text: "This is an AI-generated summary of publicly available information and is not real-time, verified medical data. Consult official public health sources for accurate statistics."
 `;
     
-    // Step 2: Structuring call to get JSON
     const structuringResponse = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: structuringPrompt,
@@ -710,11 +834,15 @@ Instructions:
                 title: chunk.web.title,
             }))
             .filter(source => source.uri && source.title);
-
-        return {
+        
+        const result = {
             ...snapshotData,
             sources: sources,
         };
+
+        cache.set(cacheKey, result, 360); // Cache for 6 hours
+        return result;
+
     } catch (e) {
         console.error("Failed to parse city health snapshot response:", structuringResponse.text, e);
         throw new Error("The model returned an invalid data format for the city health snapshot.");

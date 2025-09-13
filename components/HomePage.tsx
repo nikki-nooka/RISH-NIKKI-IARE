@@ -3,6 +3,7 @@ import { GlobeIcon, LockClosedIcon, UserIcon } from './icons';
 import { WaveBackground } from './WaveBackground';
 import { LanguageSelector } from './LanguageSelector';
 import { useI18n } from './I18n';
+import { LiveHealthAlerts } from './LiveHealthAlerts';
 
 interface HomePageProps {
   onLoginClick: () => void;
@@ -61,19 +62,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, 
                   </div>
             </div>
 
-            {/* Live Alerts Section - Temporarily Disabled */}
-            <section className="w-full max-w-4xl mx-auto py-8 mb-8">
-                <h2 className="text-xl sm:text-2xl font-bold text-center text-slate-700 mb-2">Live Global Health Alerts</h2>
-                <div className="relative flex justify-center items-center">
-                    <div className="h-0.5 w-16 bg-blue-500"></div>
-                </div>
-                <div className="mt-6 bg-white border border-slate-200/80 rounded-lg shadow-sm p-4 min-h-[10rem] flex items-center justify-center">
-                     <div className="text-center text-slate-500">
-                        <p className="font-semibold">Feature Temporarily Disabled</p>
-                        <p className="text-sm">Live alerts are currently offline to conserve resources.</p>
-                    </div>
-                </div>
-            </section>
+            {/* Live Alerts Section */}
+            <LiveHealthAlerts />
 
           </main>
       </div>

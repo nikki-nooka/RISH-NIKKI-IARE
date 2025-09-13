@@ -45,7 +45,7 @@ export const AlertDetailModal: React.FC<{ alert: Alert, onClose: () => void }> =
                 </header>
                 <div className="p-6 overflow-y-auto space-y-6">
                     {/* Context Section */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-slate-600">
                         <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border">
                             <ClockIcon className="w-5 h-5 text-slate-500 flex-shrink-0"/>
                             <div>
@@ -56,6 +56,15 @@ export const AlertDetailModal: React.FC<{ alert: Alert, onClose: () => void }> =
                             <GlobeAltIcon className="w-5 h-5 text-slate-500 flex-shrink-0"/>
                             <div>
                                 <span className="font-semibold text-slate-800">Country/Region:</span> {alert.country || 'N/A'}
+                            </div>
+                        </div>
+                        <div className={`flex items-center gap-2 p-3 rounded-lg border ${alert.source === 'local' ? 'bg-green-50' : 'bg-blue-50'}`}>
+                            {alert.source === 'local' ? <MapPinIcon className="w-5 h-5 text-green-600 flex-shrink-0"/> : <GlobeIcon className="w-5 h-5 text-blue-600 flex-shrink-0"/>}
+                            <div>
+                                <span className="font-semibold text-slate-800">Source:</span>
+                                <span className={`font-bold ml-1 ${alert.source === 'local' ? 'text-green-700' : 'text-blue-700'}`}>
+                                    {alert.source === 'local' ? 'Local Alert' : 'Global Alert'}
+                                </span>
                             </div>
                         </div>
                     </div>

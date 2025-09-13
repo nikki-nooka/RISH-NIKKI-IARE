@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { getLiveHealthAlerts } from '../services/geminiService';
+import React, 'use client';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { getLiveHealthAlerts, getLocalHealthAlerts } from '../services/geminiService';
 import type { Alert, AlertCategory } from '../types';
 import { BiohazardIcon, WindIcon, SunIcon, GlobeIcon, MapPinIcon, MegaphoneIcon, BellIcon } from './icons';
 import { AlertDetailModal } from './AlertDetailModal';
@@ -25,106 +26,172 @@ const AlertSkeleton: React.FC = () => (
     </div>
 );
 
-
 export const AlertsPage: React.FC = () => {
-    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [alerts, setAlerts] = useState<{ global: Alert[], local: Alert[] }>({ global: [], local: [] });
     const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [error, setError] = useState<{ global?: string, local?: string }>({});
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    
+    const { localAlerts, globalAlerts } = useMemo(() => {
+        const local = alerts.local;
+        const global = alerts.global;
+        const uniqueGlobal = global.filter(g => 
+            !local.some(l => l.title === g.title && l.location === g.location)
+        );
+        return { localAlerts: local, globalAlerts: uniqueGlobal };
+    }, [alerts]);
 
-    const fetchAlerts = async (isManualRefresh = false) => {
-        if (!isManualRefresh) {
+    const fetchAlerts = useCallback(async (isManualRefresh = false) => {
+        if (isManualRefresh) {
+            setIsRefreshing(true);
+        } else {
             setIsLoading(true);
         }
-        setError(null);
-        try {
-            const fetchedAlerts = await getLiveHealthAlerts();
-            if (fetchedAlerts.length > 0) {
-                setAlerts(fetchedAlerts);
-                setLastUpdated(new Date());
-            } else {
-                 setError("No new health alerts found at this time.");
-                 setAlerts([]);
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Failed to fetch live health alerts. The service may be temporarily unavailable.");
-            setAlerts([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        setError({});
 
-    useEffect(() => {
-        // fetchAlerts();
-        // const interval = setInterval(() => fetchAlerts(true), 300000); // 5 minutes
-        // return () => clearInterval(interval);
+        const fetchGlobal = getLiveHealthAlerts(isManualRefresh).catch(e => {
+            console.error("Failed to fetch global alerts:", e);
+            setError(prev => ({...prev, global: "Could not fetch global alerts."}));
+            return [];
+        });
+
+        const fetchLocal = new Promise<Alert[]>(resolve => {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const { latitude, longitude } = position.coords;
+                    getLocalHealthAlerts(latitude, longitude, isManualRefresh)
+                        .then(resolve)
+                        .catch(e => {
+                            console.error("Failed to fetch local alerts:", e);
+                            setError(prev => ({...prev, local: "Could not fetch local alerts for your area."}));
+                            resolve([]);
+                        });
+                },
+                (geoError) => {
+                    console.warn("Geolocation failed:", geoError.message);
+                    setError(prev => ({...prev, local: "Could not get your location to find local alerts."}));
+                    resolve([]);
+                },
+                { timeout: 8000 }
+            );
+        });
+
+        const [globalResult, localResult] = await Promise.all([fetchGlobal, fetchLocal]);
+        
+        setAlerts({ global: globalResult, local: localResult });
+        setLastUpdated(new Date());
         setIsLoading(false);
-        setError("Live health alerts are temporarily disabled to conserve resources.");
+        setIsRefreshing(false);
     }, []);
 
-    return (
-        <div className="w-full min-h-full flex flex-col p-4 sm:p-6 lg:p-8 animate-fade-in">
-            <header className="w-full max-w-5xl mx-auto mb-8">
-                 <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                           <BellIcon className="w-8 h-8 text-blue-500" /> Live Global Health Alerts
-                        </h1>
-                        <p className="text-slate-600">The latest health intelligence from around the world.</p>
-                    </div>
-                     <button
-                        onClick={() => fetchAlerts(true)}
-                        disabled={true}
-                        className="bg-white hover:bg-slate-100 text-blue-500 font-semibold py-2 px-4 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm border border-blue-200 disabled:opacity-50"
-                     >
-                         <svg className={`w-5 h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.664 0l3.181-3.183m-4.991-2.691V5.25a3.75 3.75 0 0 0-3.75-3.75H8.25a3.75 3.75 0 0 0-3.75 3.75v5.25m0 0h4.992" />
-                         </svg>
-                        {isLoading ? 'Refreshing...' : 'Refresh'}
-                     </button>
-                 </div>
-                 {lastUpdated && !isLoading && <p className="text-xs text-slate-500 mt-2">Last updated: {lastUpdated.toLocaleTimeString()}</p>}
-            </header>
+    useEffect(() => {
+        fetchAlerts();
+    }, []); // Run only on initial mount. Refresh is manual via button.
+    
+    const AlertCard: React.FC<{alert: Alert}> = ({ alert }) => (
+        <button
+            onClick={() => setSelectedAlert(alert)}
+            className="w-full flex items-start text-left gap-4 p-4 bg-white rounded-lg shadow-sm border border-slate-200/80 hover:shadow-md hover:border-slate-300 transition-all"
+        >
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mt-1">
+                {getIconForCategory(alert.category, "w-6 h-6")}
+            </div>
+            <div className="flex-grow min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                    {alert.source === 'local' && (
+                        <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Local</span>
+                    )}
+                    <p className="font-semibold text-slate-800">{alert.title}</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                    <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{alert.location}, {alert.country}</span>
+                </div>
+            </div>
+             <span className="text-xs font-bold text-blue-500 self-center hidden sm:block">Details &rarr;</span>
+        </button>
+    );
 
+    const renderAlerts = () => {
+        if (isLoading) {
+            return (
+                <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => <AlertSkeleton key={i} />)}
+                </div>
+            );
+        }
+        
+        const hasErrors = Object.keys(error).length > 0;
+        const noAlerts = localAlerts.length === 0 && globalAlerts.length === 0;
+
+        if (noAlerts) {
+            return (
+                <div className="text-center bg-white p-12 rounded-lg shadow-sm border border-slate-200/80">
+                    <BellIcon className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                    <h2 className="text-xl font-bold text-slate-700">{hasErrors ? "Could Not Fetch Alerts" : "No Active Alerts"}</h2>
+                    <p className="text-slate-500 mt-2">
+                        {hasErrors 
+                            ? `${error.local || ''} ${error.global || ''}`.trim()
+                            : "No significant public health alerts found at this time."
+                        }
+                    </p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-8">
+                {localAlerts.length > 0 && (
+                    <section>
+                        <h2 className="text-xl font-bold text-slate-800 mb-4">Local Alerts</h2>
+                        <div className="space-y-4">
+                            {localAlerts.map(alert => <AlertCard key={alert.id} alert={alert} />)}
+                        </div>
+                    </section>
+                )}
+                 {globalAlerts.length > 0 && (
+                    <section>
+                        <h2 className="text-xl font-bold text-slate-800 mb-4">Global Alerts</h2>
+                        <div className="space-y-4">
+                            {globalAlerts.map(alert => <AlertCard key={alert.id} alert={alert} />)}
+                        </div>
+                    </section>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center animate-fade-in bg-slate-50">
             <main className="w-full max-w-3xl mx-auto">
-                {isLoading && (
-                    <div className="space-y-4">
-                        {Array.from({ length: 5 }).map((_, i) => <AlertSkeleton key={i} />)}
+                <header className="mb-8">
+                    <div className="flex items-center gap-3">
+                        <BellIcon className="w-10 h-10 text-slate-500" />
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">
+                                Live Health Alerts
+                            </h1>
+                            <p className="text-slate-600">The latest public health updates from around the world.</p>
+                        </div>
                     </div>
-                )}
-                {error && !isLoading && (
-                    <div className="text-center p-8 bg-red-50 rounded-lg">
-                        <p className="font-bold text-red-700">An Error Occurred</p>
-                        <p className="text-red-600 mt-2">{error}</p>
+                     <div className="mt-4 flex justify-between items-center bg-slate-100 p-2 rounded-lg">
+                        <p className="text-xs text-slate-500">
+                            Last Updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'N/A'}
+                        </p>
+                        <button 
+                            onClick={() => fetchAlerts(true)}
+                            disabled={isRefreshing || isLoading}
+                            className="text-xs font-semibold bg-white text-slate-700 px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                        >
+                            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+                        </button>
                     </div>
-                )}
-                {!isLoading && !error && (
-                    <div className="space-y-4">
-                        {alerts.map(alert => (
-                             <button
-                                key={alert.id}
-                                onClick={() => setSelectedAlert(alert)}
-                                className="w-full flex items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-slate-200/80 hover:shadow-md hover:border-blue-300 transition-all text-left animate-fade-in-up group"
-                            >
-                                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                                    {getIconForCategory(alert.category, "w-7 h-7")}
-                                </div>
-                                <div className="flex-grow min-w-0">
-                                    <p className="font-semibold text-slate-800">{alert.title}</p>
-                                    <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
-                                        <MapPinIcon className="w-4 h-4"/>
-                                        <span>{alert.location}</span>
-                                    </div>
-                                </div>
-                                <span className="text-xs font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">View Details &rarr;</span>
-                            </button>
-                        ))}
-                    </div>
-                )}
-                 {selectedAlert && <AlertDetailModal alert={selectedAlert} onClose={() => setSelectedAlert(null)} />}
+                </header>
+                {renderAlerts()}
             </main>
+            {selectedAlert && <AlertDetailModal alert={selectedAlert} onClose={() => setSelectedAlert(null)} />}
         </div>
     );
 };

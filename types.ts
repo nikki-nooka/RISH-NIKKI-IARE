@@ -155,6 +155,7 @@ export interface Alert {
     lat?: number;
     lng?: number;
     sources: AlertSource[];
+    source: 'global' | 'local';
 }
 
 export interface DiseaseReport {

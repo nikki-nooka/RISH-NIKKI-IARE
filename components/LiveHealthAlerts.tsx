@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { getLiveHealthAlerts } from '../services/geminiService';
+import React, 'use client';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { getLiveHealthAlerts, getLocalHealthAlerts } from '../services/geminiService';
 import type { Alert, AlertCategory } from '../types';
-import { BiohazardIcon, WindIcon, SunIcon, GlobeIcon, MegaphoneIcon } from './icons';
+import { BiohazardIcon, WindIcon, SunIcon, GlobeIcon, MegaphoneIcon, MapPinIcon } from './icons';
 import { LoadingSpinner } from './LoadingSpinner';
 import { AlertDetailModal } from './AlertDetailModal';
 
@@ -17,62 +18,85 @@ const getIconForCategory = (category: AlertCategory, className: string = "w-5 h-
 };
 
 export const LiveHealthAlerts: React.FC = () => {
-    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [alerts, setAlerts] = useState<{ global: Alert[], local: Alert[] }>({ global: [], local: [] });
     const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
     const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchAlerts = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const fetchedAlerts = await getLiveHealthAlerts();
-            if (fetchedAlerts.length > 0) {
-                setAlerts(fetchedAlerts);
-                setCurrentAlertIndex(0);
-            } else {
-                 setError("No new health alerts found at this time.");
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Failed to fetch live health alerts. The service may be temporarily unavailable.");
-            setAlerts([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Fetch alerts on mount and then every 5 minutes
-    useEffect(() => {
-        fetchAlerts();
-        const fetchInterval = setInterval(fetchAlerts, 300000); // 5 minutes
-        return () => clearInterval(fetchInterval);
-    }, []);
-
-    // Cycle through alerts every 30 seconds
-    useEffect(() => {
-        if (alerts.length > 1) {
-            const cycleInterval = setInterval(() => {
-                setCurrentAlertIndex(prevIndex => (prevIndex + 1) % alerts.length);
-            }, 30000); // 30 seconds
-            return () => clearInterval(cycleInterval);
-        }
+    const combinedAlerts = useMemo(() => {
+        const local = alerts.local;
+        const global = alerts.global;
+        
+        const uniqueGlobal = global.filter(g => 
+            !local.some(l => l.title === g.title && l.location === g.location)
+        );
+        
+        // Always prioritize local alerts at the beginning of the list
+        return [...local, ...uniqueGlobal];
     }, [alerts]);
 
-    const currentAlert = alerts[currentAlertIndex];
+    const fetchAlerts = useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+
+        const fetchGlobal = getLiveHealthAlerts().catch(e => {
+            console.error("Failed to fetch global alerts:", e);
+            setError(prev => prev ? `${prev} & failed to get global alerts.` : "Could not fetch global alerts.");
+            return []; // Return empty array on error
+        });
+
+        const fetchLocal = new Promise<Alert[]>(resolve => {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const { latitude, longitude } = position.coords;
+                    getLocalHealthAlerts(latitude, longitude)
+                        .then(resolve)
+                        .catch(e => {
+                            console.error("Failed to fetch local alerts:", e);
+                            resolve([]);
+                        });
+                },
+                () => {
+                    console.warn("Geolocation failed. Local alerts not available.");
+                    resolve([]); // Resolve with empty array if geolocation fails
+                },
+                { timeout: 5000 }
+            );
+        });
+        
+        const [globalAlerts, localAlerts] = await Promise.all([fetchGlobal, fetchLocal]);
+        
+        setAlerts({ global: globalAlerts, local: localAlerts });
+        setIsLoading(false);
+    }, []);
+
+    useEffect(() => {
+        fetchAlerts();
+    }, [fetchAlerts]);
+
+    useEffect(() => {
+        if (combinedAlerts.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentAlertIndex(prev => (prev + 1) % combinedAlerts.length);
+            }, 30000); // 30 seconds
+            return () => clearInterval(interval);
+        }
+    }, [combinedAlerts]);
+
+    const currentAlert = combinedAlerts[currentAlertIndex];
 
     const renderContent = () => {
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center h-48 text-center text-slate-500">
                     <LoadingSpinner />
-                    <p className="mt-3 font-medium">Fetching Latest Global Alerts...</p>
+                    <p className="mt-3 font-medium">Fetching Latest Health Alerts...</p>
                 </div>
             );
         }
 
-        if (error) {
+        if (error && combinedAlerts.length === 0) {
             return (
                 <div className="flex flex-col items-center justify-center h-48 text-center text-red-600 bg-red-50 rounded-lg p-4">
                     <p className="font-bold">Error</p>
@@ -84,7 +108,8 @@ export const LiveHealthAlerts: React.FC = () => {
         if (!currentAlert) {
              return (
                 <div className="flex flex-col items-center justify-center h-48 text-center text-slate-500">
-                    <p>No health alerts to display currently.</p>
+                    <p className="font-semibold">No Health Alerts</p>
+                    <p className="text-sm">No significant health alerts found at this time.</p>
                 </div>
             );
         }
@@ -100,11 +125,15 @@ export const LiveHealthAlerts: React.FC = () => {
                             {getIconForCategory(currentAlert.category, "w-6 h-6")}
                         </div>
                         <div className="flex-grow min-w-0">
-                            <p className="text-base text-slate-800 font-semibold truncate">{currentAlert.title}</p>
-                            <div className="flex items-center gap-4 text-sm text-slate-500 mt-1">
-                                <span>{currentAlert.location}</span>
-                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
-                                <span>Live</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                {currentAlert.source === 'local' && (
+                                    <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">Local</span>
+                                )}
+                                <p className="text-base text-slate-800 font-semibold truncate">{currentAlert.title}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
+                                <MapPinIcon className="w-4 h-4 flex-shrink-0" />
+                                <span className="truncate">{currentAlert.location}</span>
                             </div>
                         </div>
                          <span className="text-xs font-bold text-blue-500 self-center hidden sm:block">View Details &rarr;</span>
@@ -125,7 +154,7 @@ export const LiveHealthAlerts: React.FC = () => {
 
     return (
         <section className="w-full max-w-4xl mx-auto py-8 mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-center text-slate-700 mb-2">Live Global Health Alerts</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-center text-slate-700 mb-2">Live Health Alerts</h2>
             <div className="relative flex justify-center items-center">
                  <div className="h-0.5 w-16 bg-blue-500"></div>
             </div>
