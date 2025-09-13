@@ -4,6 +4,7 @@ import type { HealthForecast as HealthForecastData, RiskFactor } from '../types'
 import { HealthForecastSkeleton } from './HealthForecastSkeleton';
 import { NewspaperIcon, PrecautionIcon, HazardIcon, SunIcon, WindIcon, SummaryIcon } from './icons';
 import { BackButton } from './BackButton';
+import { useI18n } from './I18n';
 
 interface HealthForecastProps {
     onBack: () => void;
@@ -45,6 +46,7 @@ export const HealthForecast: React.FC<HealthForecastProps> = ({ onBack }) => {
     const [status, setStatus] = useState<Status>('idle');
     const [forecast, setForecast] = useState<HealthForecastData | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const { language } = useI18n();
 
     const fetchForecast = () => {
         setStatus('locating');
@@ -54,7 +56,7 @@ export const HealthForecast: React.FC<HealthForecastProps> = ({ onBack }) => {
                 setStatus('fetching');
                 const { latitude, longitude } = position.coords;
                 try {
-                    const result = await getHealthForecast({ lat: latitude, lng: longitude });
+                    const result = await getHealthForecast({ lat: latitude, lng: longitude }, language);
                     setForecast(result);
                     setStatus('success');
                 } catch (err) {
@@ -90,7 +92,7 @@ export const HealthForecast: React.FC<HealthForecastProps> = ({ onBack }) => {
 
     useEffect(() => {
         fetchForecast();
-    }, []);
+    }, [language]);
 
     if (status === 'locating' || status === 'fetching') {
         return (

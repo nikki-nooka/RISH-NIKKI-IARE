@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { ImageUploader } from './ImageUploader';
 import { ReportSkeleton } from './ReportSkeleton';
@@ -10,6 +6,7 @@ import type { PrescriptionAnalysisResult, ActivityLogItem } from '../types';
 import { ClipboardListIcon, ScanIcon, CloseIcon } from './icons';
 import { PrescriptionReport } from './PrescriptionReport';
 import { BackButton } from './BackButton';
+import { useI18n } from './I18n';
 
 interface PrescriptionAnalysisPageProps {
   onBack: () => void;
@@ -31,6 +28,7 @@ export const PrescriptionAnalysisPage: React.FC<PrescriptionAnalysisPageProps> =
   const [error, setError] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { language } = useI18n();
 
   useEffect(() => {
     if (imageFile) {
@@ -52,9 +50,9 @@ export const PrescriptionAnalysisPage: React.FC<PrescriptionAnalysisPageProps> =
 
     try {
       const imageData = await fileToBase64(imageFile);
-      const result = await analyzePrescription(imageData);
+      const result = await analyzePrescription(imageData, language);
       setAnalysis(result);
-      onAnalysisComplete({ type: 'prescription-analysis', title: 'Prescription Analysis', data: result });
+      onAnalysisComplete({ type: 'prescription-analysis', title: 'Prescription Analysis', data: result, language });
     } catch (err) {
       console.error(err);
       setError('Failed to analyze the prescription. The AI model may be unavailable, the content was blocked, or the image was unreadable. Please try another image.');

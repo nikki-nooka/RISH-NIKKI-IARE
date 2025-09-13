@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { User } from '../types';
 import { ScanIcon, NewspaperIcon, StethoscopeIcon, DocumentChartBarIcon, GlassWaterIcon, SparklesIcon } from './icons';
 import { HealthForecast } from './HealthForecast';
+import { useI18n } from './I18n';
 
 interface ActionItemCardProps {
     icon: React.ReactNode;
@@ -45,43 +46,44 @@ interface WelcomePageProps {
 
 export const WelcomePage: React.FC<WelcomePageProps> = ({ user, onAnalyze, onAnalyzePrescription, onAnalyzeMentalHealth, onCheckSymptoms, onWaterLog }) => {
   const [view, setView] = useState<'actions' | 'briefing'>('actions');
+  const { t } = useI18n();
 
   const actions = [
     {
       icon: <NewspaperIcon className="w-7 h-7 text-purple-500" />,
-      title: 'HealthCast',
-      description: 'Your daily health forecast',
+      title: t('health_forecast'),
+      description: t('health_forecast_desc'),
       onClick: () => setView('briefing'),
     },
     {
       icon: <ScanIcon className="w-7 h-7 text-blue-500" />,
-      title: 'Area Scan',
-      description: 'Analyze surroundings for risks',
+      title: t('area_scan'),
+      description: t('area_scan_desc'),
       onClick: onAnalyze,
     },
     {
       icon: <StethoscopeIcon className="w-7 h-7 text-teal-500" />,
-      title: 'Symptom Checker',
-      description: 'Get AI-driven insights',
+      title: t('symptom_checker'),
+      description: t('symptom_checker_desc'),
       onClick: onCheckSymptoms,
     },
     {
       icon: <DocumentChartBarIcon className="w-7 h-7 text-orange-500" />,
-      title: 'Script Reader',
-      description: 'Interpret prescriptions easily',
+      title: t('script_reader'),
+      description: t('script_reader_desc'),
       onClick: onAnalyzePrescription,
     },
     {
       icon: <GlassWaterIcon className="w-7 h-7 text-cyan-500" />,
-      title: 'Water Log',
-      description: 'Track your daily intake',
+      title: t('water_log'),
+      description: t('water_log_desc'),
       onClick: onWaterLog,
       disabled: false,
     },
     {
       icon: <SparklesIcon className="w-7 h-7 text-indigo-500" />,
-      title: 'Mind Check',
-      description: 'Reflect on your well-being',
+      title: t('mind_check'),
+      description: t('mind_check_desc'),
       onClick: onAnalyzeMentalHealth,
     },
   ];
@@ -96,8 +98,8 @@ export const WelcomePage: React.FC<WelcomePageProps> = ({ user, onAnalyze, onAna
         <div className="w-full max-w-2xl z-10">
             <header className="mb-8 text-center sm:text-left">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-800">Welcome, {user.name}!</h1>
-                    <p className="text-slate-600">What would you like to do today?</p>
+                    <h1 className="text-3xl font-bold text-slate-800">{t('welcome_user', { name: user.name })}</h1>
+                    <p className="text-slate-600">{t('what_today')}</p>
                 </div>
             </header>
             

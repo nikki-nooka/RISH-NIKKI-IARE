@@ -1,6 +1,3 @@
-
-
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { AnalysisResult, LocationAnalysisResult, Facility, PrescriptionAnalysisResult, HealthForecast, MentalHealthResult, SymptomAnalysisResult, Page, BotCommandResponse, Alert, AlertSource, CityHealthSnapshot } from '../types';
 
@@ -51,8 +48,10 @@ const locationAnalysisSchema = {
     required: ["locationName", "hazards", "diseases", "summary"]
 };
 
-export const analyzeLocationByCoordinates = async (lat: number, lng: number, knownLocationName?: string): Promise<{ analysis: LocationAnalysisResult, imageUrl: string | null }> => {
+export const analyzeLocationByCoordinates = async (lat: number, lng: number, language: string, knownLocationName?: string): Promise<{ analysis: LocationAnalysisResult, imageUrl: string | null }> => {
     let contents: string;
+    const languageInstruction = `Your response must be a single JSON object conforming to the provided schema. All text content within the JSON must be in ${language}. Your analysis must be distinct and tailored, avoiding repetition for nearby coordinates.`;
+    
     if (knownLocationName) {
         contents = `Act as a specialized environmental scientist. Your task is to provide a highly specific and unique analysis for the *exact* location known as "${knownLocationName}" at coordinates: latitude ${lat}, longitude ${lng}. Do not provide a generic regional summary; focus on the distinct micro-environment of this point.
             Your goal is to identify potential environmental health risks based on its specific geography and climate, not to provide medical advice.
@@ -61,7 +60,7 @@ export const analyzeLocationByCoordinates = async (lat: number, lng: number, kno
             3. For each hazard, list associated, potential diseases or health conditions.
             4. For each disease, list general, non-prescriptive public health precautions.
             5. Write a brief, neutral summary of this specific location's environmental profile.
-            Your response must be a single JSON object conforming to the provided schema. Your analysis must be distinct and tailored, avoiding repetition for nearby coordinates.`;
+            ${languageInstruction}`;
     } else {
         contents = `Act as a specialized environmental scientist. Your task is to provide a highly specific and unique analysis for the *exact* coordinates: latitude ${lat}, longitude ${lng}. Do not provide a generic regional summary; focus on the distinct micro-environment of this point.
             Your goal is to identify potential environmental health risks based on its specific geography and climate, not to provide medical advice.
@@ -70,7 +69,7 @@ export const analyzeLocationByCoordinates = async (lat: number, lng: number, kno
             3. For each hazard, list associated, potential diseases or health conditions.
             4. For each disease, list general, non-prescriptive public health precautions.
             5. Write a brief, neutral summary of this specific location's environmental profile.
-            Your response must be a single JSON object conforming to the provided schema. Your analysis must be distinct and tailored, avoiding repetition for nearby coordinates.`;
+            ${languageInstruction}`;
     }
 
     const [analysisResult, imageResult] = await Promise.allSettled([
@@ -101,7 +100,6 @@ export const analyzeLocationByCoordinates = async (lat: number, lng: number, kno
 
     let analysis: LocationAnalysisResult;
     try {
-        // FIX: Access response.text directly as per guidelines
         const jsonText = analysisResult.value.text.trim();
         analysis = JSON.parse(jsonText) as LocationAnalysisResult;
     } catch (e) {
@@ -120,7 +118,6 @@ export const analyzeLocationByCoordinates = async (lat: number, lng: number, kno
         }
     } else {
         console.warn("Image generation failed:", imageResult.reason);
-        // Image generation failed, but we can proceed without it.
     }
 
     return { analysis, imageUrl };
@@ -166,7 +163,7 @@ const analysisSchema = {
     required: ["hazards", "diseases", "summary"]
 };
 
-export const analyzeImage = async (base64ImageData: string): Promise<AnalysisResult> => {
+export const analyzeImage = async (base64ImageData: string, language: string): Promise<AnalysisResult> => {
     const imagePart = {
         inlineData: {
             mimeType: 'image/jpeg',
@@ -180,7 +177,7 @@ export const analyzeImage = async (base64ImageData: string): Promise<AnalysisRes
         2.  **Predict Associated Diseases:** Based on the identified hazards, list potential diseases (e.g., Malaria from stagnant water, Cholera from contaminated water sources, respiratory issues from air pollution).
         3.  **Provide a Detailed Report:** Synthesize your findings into a clear, structured report.
         4.  **Suggest Actionable Precautions:** For each potential disease, provide a list of practical and effective preventive measures for individuals and the community.
-        Your response must be in JSON format conforming to the provided schema.`
+        Your response must be in JSON format conforming to the provided schema. All text values within the JSON must be in ${language}.`
     };
 
     const response = await ai.models.generateContent({
@@ -230,7 +227,7 @@ const prescriptionAnalysisSchema = {
 };
 
 
-export const analyzePrescription = async (base64ImageData: string): Promise<PrescriptionAnalysisResult> => {
+export const analyzePrescription = async (base64ImageData: string, language: string): Promise<PrescriptionAnalysisResult> => {
     const imagePart = {
         inlineData: {
             mimeType: 'image/jpeg',
@@ -245,7 +242,7 @@ export const analyzePrescription = async (base64ImageData: string): Promise<Pres
         3.  **Identify Precautions:** Note any special warnings, advice, or precautions mentioned.
         4.  **Summarize:** Provide a brief, simple summary of the prescription's purpose.
         If any part of the prescription is illegible, state that clearly in the relevant field (e.g., 'Dosage illegible'). Do not guess.
-        Your response must be in JSON format conforming to the provided schema.`
+        Your response must be in JSON format conforming to the provided schema. All text values within the JSON must be in ${language}.`
     };
 
     const response = await ai.models.generateContent({
@@ -427,10 +424,10 @@ const healthForecastSchema = {
 };
 
 
-export const getHealthForecast = async (coords: { lat: number; lng: number }): Promise<HealthForecast> => {
+export const getHealthForecast = async (coords: { lat: number; lng: number }, language: string): Promise<HealthForecast> => {
      const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Generate a daily health forecast for the location at latitude ${coords.lat}, longitude ${coords.lng}. Identify the location name. Include a summary, at least 3 key risk factors (like Air Quality, UV Index, Pollen, Mosquito Activity) with a risk level ('Low', 'Moderate', 'High', 'Very High'), and provide simple, actionable recommendations.`,
+        contents: `Generate a daily health forecast for the location at latitude ${coords.lat}, longitude ${coords.lng}. Identify the location name. Include a summary, at least 3 key risk factors (like Air Quality, UV Index, Pollen, Mosquito Activity) with a risk level ('Low', 'Moderate', 'High', 'Very High'), and provide simple, actionable recommendations. The entire response, including all text values inside the JSON, must be in the ${language} language.`,
         config: {
             responseMimeType: "application/json",
             responseSchema: healthForecastSchema,
@@ -477,7 +474,7 @@ const mentalHealthSchema = {
     required: ["summary", "potentialConcerns", "copingStrategies", "recommendation"]
 };
 
-export const analyzeMentalHealth = async (answers: Record<string, string>): Promise<MentalHealthResult> => {
+export const analyzeMentalHealth = async (answers: Record<string, string>, language: string): Promise<MentalHealthResult> => {
     const prompt = `Act as a compassionate, non-clinical wellness assistant. A user has answered the following questions about their feelings over the last two weeks. The format is "Question": "Answer".
     ${JSON.stringify(answers, null, 2)}
     Based *only* on these answers, provide a supportive reflection.
@@ -485,7 +482,7 @@ export const analyzeMentalHealth = async (answers: Record<string, string>): Prom
     2. Identify 1-2 potential areas for reflection (e.g., low mood, stress). Do NOT use diagnostic terms like "depression" or "anxiety disorder".
     3. Suggest 2-3 general, positive coping strategies (e.g., mindfulness, connecting with nature, talking to a friend).
     4. Conclude with a recommendation to speak with a professional for a real diagnosis if these feelings are persistent.
-    Your response must be in JSON format conforming to the provided schema.`;
+    Your response must be in JSON format conforming to the provided schema. All text values within the JSON must be in ${language}.`;
     
      const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -667,8 +664,8 @@ const cityHealthSnapshotSchema = {
     required: ["cityName", "country", "lastUpdated", "overallSummary", "diseases", "dataDisclaimer"]
 };
 
-export const getCityHealthSnapshot = async (cityName: string, country: string): Promise<CityHealthSnapshot> => {
-    const groundingPrompt = `Act as a public health intelligence analyst. Your task is to use Google Search to gather the most recent, publicly available information (from news, health ministries, WHO reports from the last 30-60 days) on infectious and prevalent diseases for the city of ${cityName}, ${country}. Your goal is to create a concise public health snapshot. Collect information on the 3-4 most discussed diseases, including a summary, trend, estimated cases, and affected demographics. Also find a brief overall summary.`;
+export const getCityHealthSnapshot = async (cityName: string, country: string, language: string): Promise<CityHealthSnapshot> => {
+    const groundingPrompt = `Act as a public health intelligence analyst. Your task is to use Google Search to gather the most recent, publicly available information (from news, health ministries, WHO reports from the last 30-60 days) on infectious and prevalent diseases for the city of ${cityName}, ${country}. Your goal is to create a concise public health snapshot. Collect information on the 3-4 most discussed diseases, including a summary, trend, estimated cases, and affected demographics. Also find a brief overall summary. The response must be in ${language}.`;
 
     // Step 1: Grounded call to get raw information
     const groundingResponse = await ai.models.generateContent({
@@ -679,7 +676,7 @@ export const getCityHealthSnapshot = async (cityName: string, country: string): 
         }
     });
 
-    const structuringPrompt = `Based on the following public health information for ${cityName}, ${country}, format it into a single, valid JSON object that conforms to the provided schema.
+    const structuringPrompt = `Based on the following public health information for ${cityName}, ${country}, format it into a single, valid JSON object that conforms to the provided schema. The entire response, including all text values inside the JSON, MUST be in the ${language} language.
 
 Information:
 ${groundingResponse.text}

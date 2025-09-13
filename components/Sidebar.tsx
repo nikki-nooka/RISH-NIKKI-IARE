@@ -1,6 +1,8 @@
 import React from 'react';
 import type { User, Page } from '../types';
 import { GlobeIcon, HomeIcon, HistoryIcon, UserIcon, LogoutIcon, CloseIcon, LockClosedIcon, ChatBubbleLeftEllipsisIcon } from './icons';
+import { useI18n } from './I18n';
+import { LanguageSelector } from './LanguageSelector';
 
 interface SidebarProps {
   user: User;
@@ -35,11 +37,12 @@ const NavItem: React.FC<{
 
 
 export const Sidebar: React.FC<SidebarProps> = ({ user, currentPage, onNavigate, onLogout, isOpen, onClose, onOpenFeedbackModal }) => {
+    const { t } = useI18n();
     const navItems: { page: Page; label: string; icon: React.ReactNode, adminOnly?: boolean }[] = [
-        { page: 'welcome', label: 'Dashboard', icon: <HomeIcon className="w-5 h-5" /> },
-        { page: 'activity-history', label: 'Activity History', icon: <HistoryIcon className="w-5 h-5" /> },
-        { page: 'profile', label: 'My Profile', icon: <UserIcon className="w-5 h-5" /> },
-        { page: 'admin-dashboard', label: 'Admin Dashboard', icon: <LockClosedIcon className="w-5 h-5" />, adminOnly: true },
+        { page: 'welcome', label: t('dashboard'), icon: <HomeIcon className="w-5 h-5" /> },
+        { page: 'activity-history', label: t('activity_history'), icon: <HistoryIcon className="w-5 h-5" /> },
+        { page: 'profile', label: t('my_profile'), icon: <UserIcon className="w-5 h-5" /> },
+        { page: 'admin-dashboard', label: t('admin_dashboard'), icon: <LockClosedIcon className="w-5 h-5" />, adminOnly: true },
     ];
 
     return (
@@ -85,11 +88,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentPage, onNavigate,
                         className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate-300 hover:bg-slate-700/50 hover:text-white"
                     >
                         <ChatBubbleLeftEllipsisIcon className="w-5 h-5" />
-                        <span className="ml-3">Feedback & Review</span>
+                        <span className="ml-3">{t('feedback_review')}</span>
                     </button>
                 </nav>
-
-                <div className="mt-6 pt-4 border-t border-slate-700">
+                
+                <div className="mt-4 pt-4 border-t border-slate-700">
+                    <div className="px-2 mb-3">
+                        <label className="text-xs font-semibold text-slate-400">{t('language')}</label>
+                        <LanguageSelector variant="dark" className="mt-1" />
+                    </div>
                      <div className="flex items-center gap-3 p-2 rounded-lg">
                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center font-bold">
                             {user.name.charAt(0).toUpperCase()}
@@ -104,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentPage, onNavigate,
                         className="flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 text-slate-300 hover:bg-red-500/20 hover:text-red-300 mt-2"
                     >
                         <LogoutIcon className="w-5 h-5" />
-                        <span className="ml-3">Logout</span>
+                        <span className="ml-3">{t('logout')}</span>
                     </button>
                 </div>
             </aside>

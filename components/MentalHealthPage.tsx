@@ -5,6 +5,7 @@ import type { MentalHealthResult, ActivityLogItem } from '../types';
 import { MentalHealthReport } from './MentalHealthReport';
 import { LoadingSpinner } from './LoadingSpinner';
 import { BackButton } from './BackButton';
+import { useI18n } from './I18n';
 
 interface MentalHealthPageProps {
   onBack: () => void;
@@ -43,6 +44,7 @@ export const MentalHealthPage: React.FC<MentalHealthPageProps> = ({ onBack, onAn
     const [error, setError] = useState<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [currentLoadingMessage, setCurrentLoadingMessage] = useState(LoadingMessages[0]);
+    const { language } = useI18n();
     
     // Randomize questions on mount
     const questions = useMemo(() => {
@@ -85,10 +87,10 @@ export const MentalHealthPage: React.FC<MentalHealthPageProps> = ({ onBack, onAn
         });
 
         try {
-            const analysisResult = await analyzeMentalHealth(fullQuestionsAnswers);
+            const analysisResult = await analyzeMentalHealth(fullQuestionsAnswers, language);
             setResult(analysisResult);
             setStatus('success');
-            onAnalysisComplete({ type: 'mental-health', title: 'Mental Wellness Check-in', data: analysisResult });
+            onAnalysisComplete({ type: 'mental-health', title: 'Mental Wellness Check-in', data: analysisResult, language });
         } catch (err) {
             console.error(err);
             setError('Failed to get your wellness analysis. The AI model may be busy. Please try again.');

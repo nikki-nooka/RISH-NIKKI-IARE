@@ -1,16 +1,12 @@
-
-
-
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
-import { StethoscopeIcon, SendIcon, HazardIcon, MicrophoneIcon, ChevronDownIcon } from './icons';
+import { StethoscopeIcon, SendIcon, HazardIcon, MicrophoneIcon } from './icons';
 import { analyzeSymptoms } from '../services/geminiService';
 import type { SymptomAnalysisResult, ActivityLogItem } from '../types';
 import { SymptomAnalysisReport } from './SymptomAnalysisReport';
 import { SymptomReportSkeleton } from './SymptomReportSkeleton';
 import { BackButton } from './BackButton';
+import { useI18n } from './I18n';
+import { supportedLanguages } from '../data/translations';
 
 interface SymptomCheckerPageProps {
   onBack: () => void;
@@ -31,34 +27,18 @@ interface SpeechRecognition {
 
 const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-const supportedLanguages = [
-    { code: 'en-US', name: 'English' },
-    { code: 'es-ES', name: 'Español' },
-    { code: 'fr-FR', name: 'Français' },
-    { code: 'de-DE', name: 'Deutsch' },
-    { code: 'it-IT', name: 'Italiano' },
-    { code: 'pt-BR', name: 'Português' },
-    { code: 'ru-RU', name: 'Русский' },
-    { code: 'ja-JP', name: '日本語' },
-    { code: 'ko-KR', name: '한국어' },
-    { code: 'zh-CN', name: '中文' },
-    { code: 'ar-SA', name: 'العربية' },
-    { code: 'hi-IN', name: 'हिन्दी' },
-    { code: 'te-IN', name: 'తెలుగు' },
-    { code: 'bn-IN', name: 'বাংলা' },
-];
-
 export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, onAnalysisComplete }) => {
     const [symptoms, setSymptoms] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [result, setResult] = useState<SymptomAnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const { language: selectedLanguage } = useI18n();
 
     // Voice input state
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
     const isSpeechSupported = !!SpeechRecognitionAPI;
-    const [selectedLanguage, setSelectedLanguage] = useState(supportedLanguages[0].code);
+    
 
     // Setup speech recognition
     useEffect(() => {
@@ -77,8 +57,6 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
         recognition.lang = selectedLanguage;
 
         recognition.onresult = (event: any) => {
-            // Combine all transcript parts received so far for live feedback.
-            // This ensures that if the user pauses, the transcript remains.
             let fullTranscript = '';
             for (let i = 0; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
@@ -135,7 +113,6 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
             const analysisResult = await analyzeSymptoms(symptoms, languageName);
             setResult(analysisResult);
             setStatus('success');
-            // FIX: Pass the selected language to be stored in the activity log.
             onAnalysisComplete({ type: 'symptom-checker', title: 'Symptom Check', data: analysisResult, language: selectedLanguage });
         } catch (err) {
             console.error(err);
@@ -143,6 +120,8 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
             setStatus('error');
         }
     };
+    
+    const currentLanguageName = supportedLanguages.find(l => l.code === selectedLanguage)?.name || 'Language';
 
     return (
          <div className="w-full min-h-screen p-4 sm:p-6 lg:p-8 flex flex-col items-center animate-fade-in bg-slate-50">
@@ -177,22 +156,9 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                             <label htmlFor="symptoms" className="block text-lg font-semibold text-slate-700">
                                 Describe your symptoms
                             </label>
-                            {isSpeechSupported && (
-                                <div className="relative">
-                                    <select
-                                        value={selectedLanguage}
-                                        onChange={(e) => setSelectedLanguage(e.target.value)}
-                                        className="appearance-none bg-slate-100 border border-slate-200 text-slate-700 text-xs rounded-md py-1.5 pl-2 pr-7 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-                                        aria-label="Select language for voice input"
-                                        disabled={status === 'loading'}
-                                    >
-                                        {supportedLanguages.map(lang => (
-                                            <option key={lang.code} value={lang.code}>{lang.name}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronDownIcon className="w-4 h-4 absolute top-1/2 right-1.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                                </div>
-                            )}
+                             <p className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                                Language: {currentLanguageName}
+                             </p>
                         </div>
                         <p className="text-sm text-slate-500 mt-1 mb-4">Be as detailed as possible. Include when they started and how you feel.</p>
                         <div className="relative">

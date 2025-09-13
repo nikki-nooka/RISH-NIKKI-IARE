@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { Header } from './Header';
 import { ImageUploader } from './ImageUploader';
@@ -11,6 +7,7 @@ import { analyzeImage } from '../services/geminiService';
 import type { AnalysisResult, ActivityLogItem } from '../types';
 import { HeartPulseIcon, ScanIcon, CloseIcon } from './icons';
 import { BackButton } from './BackButton';
+import { useI18n } from './I18n';
 
 interface ImageAnalysisPageProps {
   onBack: () => void;
@@ -33,6 +30,7 @@ export const ImageAnalysisPage: React.FC<ImageAnalysisPageProps> = ({ onBack, on
   const [error, setError] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { language } = useI18n();
 
   useEffect(() => {
     if (imageFile) {
@@ -53,9 +51,9 @@ export const ImageAnalysisPage: React.FC<ImageAnalysisPageProps> = ({ onBack, on
 
     try {
       const imageData = await fileToBase64(imageFile);
-      const result = await analyzeImage(imageData);
+      const result = await analyzeImage(imageData, language);
       setAnalysis(result);
-      onAnalysisComplete({ type: 'image-analysis', title: 'Environmental Image Analysis', data: result });
+      onAnalysisComplete({ type: 'image-analysis', title: 'Environmental Image Analysis', data: result, language });
     } catch (err) {
       console.error(err);
       setError('Failed to analyze the image. The AI model may be unavailable or the content was blocked. Please try another image.');

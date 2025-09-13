@@ -1,8 +1,8 @@
-
-
 import React from 'react';
 import { GlobeIcon, LockClosedIcon, UserIcon } from './icons';
 import { WaveBackground } from './WaveBackground';
+import { LanguageSelector } from './LanguageSelector';
+import { useI18n } from './I18n';
 
 interface HomePageProps {
   onLoginClick: () => void;
@@ -12,6 +12,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, onContactClick, onExploreClick }) => {
+  const { t } = useI18n();
   return (
     <div className="relative w-full min-h-screen flex flex-col items-center p-4 animate-fade-in overflow-hidden">
       <WaveBackground />
@@ -19,9 +20,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, 
       <div className="relative z-10 w-full flex flex-col items-center flex-grow">
           {/* Header */}
           <header className="w-full max-w-7xl mx-auto py-4 px-0 sm:px-6 lg:px-8 flex justify-end items-center space-x-2 sm:space-x-4">
-              <button onClick={onAboutClick} className="text-sm sm:text-base text-slate-600 font-medium hover:text-blue-500 transition-colors">About</button>
-              <button onClick={onContactClick} className="text-sm sm:text-base text-slate-600 font-medium hover:text-blue-500 transition-colors">Contact</button>
-              <button onClick={onLoginClick} className="bg-white hover:bg-slate-100 text-blue-500 font-semibold py-2 px-3 sm:px-4 rounded-md transition-all duration-300 text-sm sm:text-base border border-blue-200 shadow-sm hover:shadow-md">Login</button>
+              <div className="w-36">
+                <LanguageSelector />
+              </div>
+              <button onClick={onAboutClick} className="text-sm sm:text-base text-slate-600 font-medium hover:text-blue-500 transition-colors">{t('about')}</button>
+              <button onClick={onContactClick} className="text-sm sm:text-base text-slate-600 font-medium hover:text-blue-500 transition-colors">{t('contact')}</button>
+              <button onClick={onLoginClick} className="bg-white hover:bg-slate-100 text-blue-500 font-semibold py-2 px-3 sm:px-4 rounded-md transition-all duration-300 text-sm sm:text-base border border-blue-200 shadow-sm hover:shadow-md">{t('login')}</button>
           </header>
 
           {/* Main Content */}
@@ -35,7 +39,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, 
                       </h1>
                   </div>
                   <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-slate-600">
-                      Explore the globe, uncover hidden environmental risks, and protect communities with AI-powered health insights.
+                      {t('homepage_subtitle')}
                   </p>
                   <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-xs sm:max-w-none sm:w-auto mx-auto">
                       <button
@@ -44,7 +48,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, 
                           aria-label="Start exploring the globe"
                       >
                           <GlobeIcon className="w-5 h-5 mr-3" />
-                          Explore the Globe
+                          {t('explore_globe')}
                       </button>
                       <button
                           onClick={onLoginClick}
@@ -52,7 +56,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, 
                           aria-label="Log in to use the app"
                       >
                          <LockClosedIcon className="w-5 h-5 mr-3" />
-                          Get Started
+                          {t('get_started')}
                       </button>
                   </div>
             </div>

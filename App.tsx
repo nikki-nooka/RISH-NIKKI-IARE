@@ -22,13 +22,14 @@ import { AlertsPage } from './components/AlertsPage';
 import { WaterLogPage } from './components/WaterLogPage';
 import { Bars3Icon, GlobeIcon } from './components/icons';
 import { FeedbackModal } from './components/FeedbackModal';
+import { I18nProvider } from './components/I18n';
 
 const ACTIVITY_HISTORY_KEY = 'geosick_activity_history';
 const GLOBAL_ACTIVITY_HISTORY_KEY = 'geosick_global_activity_history';
 const USERS_KEY = 'geosick_users';
 const SESSION_KEY = 'geosick_session_phone';
 
-export default function App() {
+function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [showIntro, setShowIntro] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -330,4 +331,12 @@ export default function App() {
       )}
     </>
   );
+}
+
+export default function App() {
+    return (
+        <I18nProvider>
+            <AppContent />
+        </I18nProvider>
+    );
 }

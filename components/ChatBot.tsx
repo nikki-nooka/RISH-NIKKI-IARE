@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { getBotCommand } from '../services/geminiService';
 import type { ChatMessage, Page } from '../types';
 import { BotIcon, SendIcon, CloseIcon, ChevronDownIcon, MicrophoneIcon, SpeakerWaveIcon, SpeakerXMarkIcon, SparklesIcon } from './icons';
+import { useI18n } from './I18n';
+import { supportedLanguages } from '../data/translations';
 
 interface ChatBotProps {
     onNavigate: (page: Page) => void;
@@ -22,30 +24,13 @@ interface SpeechRecognition {
 // For cross-browser compatibility
 const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-const supportedLanguages = [
-    { code: 'en-US', name: 'English' },
-    { code: 'es-ES', name: 'Español' },
-    { code: 'fr-FR', name: 'Français' },
-    { code: 'de-DE', name: 'Deutsch' },
-    { code: 'it-IT', name: 'Italiano' },
-    { code: 'pt-BR', name: 'Português' },
-    { code: 'ru-RU', name: 'Русский' },
-    { code: 'ja-JP', name: '日本語' },
-    { code: 'ko-KR', name: '한국어' },
-    { code: 'zh-CN', name: '中文' },
-    { code: 'ar-SA', name: 'العربية' },
-    { code: 'hi-IN', name: 'हिन्दी' },
-    { code: 'te-IN', name: 'తెలుగు' },
-    { code: 'bn-IN', name: 'বাংলা' },
-];
-
-
 export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const { language: selectedLanguage } = useI18n();
     
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -53,7 +38,6 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
 
     const [isMuted, setIsMuted] = useState(false);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-    const [selectedLanguage, setSelectedLanguage] = useState(supportedLanguages[0].code);
     const [selectedVoiceURI, setSelectedVoiceURI] = useState<string | null>(null);
     const [isVoiceAvailable, setIsVoiceAvailable] = useState(true);
 
@@ -71,9 +55,6 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
             const availableVoices = window.speechSynthesis.getVoices();
 
             if (availableVoices.length === 0) {
-                // Voices might be loading asynchronously.
-                // The onvoiceschanged event will trigger this function again.
-                // For now, assume unavailability.
                 setVoices([]);
                 setSelectedVoiceURI(null);
                 setIsVoiceAvailable(false);
@@ -90,18 +71,14 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
                 setIsVoiceAvailable(true);
             } else {
                 setSelectedVoiceURI(null);
-                // If no voice is found for the language, TTS will likely fail silently.
-                // We update the UI to inform the user.
                 setIsVoiceAvailable(false);
             }
         };
 
-        // The 'voiceschanged' event is crucial for ensuring the voice list is populated.
         window.speechSynthesis.onvoiceschanged = loadVoices;
-        loadVoices(); // Initial attempt to load voices
+        loadVoices(); 
 
         return () => {
-            // Cleanup: remove event listener and stop any speech.
             window.speechSynthesis.onvoiceschanged = null;
             window.speechSynthesis.cancel();
         };
@@ -122,7 +99,6 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
         utterance.rate = 1;
         utterance.pitch = 1;
 
-        // A small delay can help prevent issues on some browsers.
         setTimeout(() => window.speechSynthesis.speak(utterance), 100);
     };
 
@@ -137,13 +113,11 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
         }
 
         const recognition = new SpeechRecognitionAPI();
-        recognition.continuous = true; // Listen until manually stopped.
-        recognition.interimResults = true; // Show results as they come in
+        recognition.continuous = true;
+        recognition.interimResults = true; 
         recognition.lang = selectedLanguage;
 
         recognition.onresult = (event: any) => {
-            // Combine all transcript parts received so far for live feedback.
-            // This ensures that if the user pauses, the transcript remains.
             let fullTranscript = '';
             for (let i = 0; i < event.results.length; i++) {
                 fullTranscript += event.results[i][0].transcript;
@@ -227,11 +201,12 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
                 setIsListening(true);
             } catch (e) {
                 console.error("Could not start recognition:", e);
-                // This can happen if it's already started or another error occurs
                 setIsListening(false);
             }
         }
     };
+
+    const currentLanguageName = supportedLanguages.find(l => l.code === selectedLanguage)?.name || 'Language';
 
     return (
         <>
@@ -246,37 +221,10 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
             {isOpen && (
                 <div className="fixed bottom-24 right-6 w-[90vw] max-w-sm h-[70vh] max-h-[550px] bg-white border border-slate-200 rounded-lg shadow-xl flex flex-col z-40 animate-fade-in-up">
                     <header className="p-3 flex justify-between items-center rounded-t-lg border-b border-slate-200">
-                        <div className="relative">
-                            <select
-                                value={selectedLanguage}
-                                onChange={(e) => setSelectedLanguage(e.target.value)}
-                                className="appearance-none bg-slate-100 border border-slate-200 text-slate-700 text-xs rounded-md py-1.5 pl-2 pr-7 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
-                                aria-label="Select language"
-                            >
-                                {supportedLanguages.map(lang => (
-                                    <option key={lang.code} value={lang.code}>{lang.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDownIcon className="w-4 h-4 absolute top-1/2 right-1.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                        </div>
+                         <p className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
+                           Language: {currentLanguageName}
+                         </p>
                          <div className="flex items-center gap-3">
-                            {voices.length > 0 && !isMuted && (
-                                <div className="relative">
-                                    <select
-                                        value={selectedVoiceURI || ''}
-                                        onChange={(e) => setSelectedVoiceURI(e.target.value)}
-                                        className="appearance-none bg-slate-100 border border-slate-200 text-slate-700 text-xs rounded-md py-1.5 pl-2 pr-7 focus:ring-blue-500 focus:border-blue-500 cursor-pointer max-w-[100px]"
-                                        aria-label="Select voice"
-                                    >
-                                        {voices.map(voice => (
-                                            <option key={voice.voiceURI} value={voice.voiceURI}>
-                                                {voice.name.split(/[\(\[]/)[0].trim()}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDownIcon className="w-4 h-4 absolute top-1/2 right-1.5 -translate-y-1/2 text-slate-500 pointer-events-none" />
-                                </div>
-                            )}
                             <button 
                                 onClick={() => setIsMuted(!isMuted)} 
                                 className="text-slate-400 hover:text-slate-600 disabled:text-slate-300 disabled:cursor-not-allowed"

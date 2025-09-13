@@ -8,6 +8,7 @@ import { MapPinIcon, MagnifyingGlassIcon, CloseIcon } from './icons';
 import { LoadingSpinner } from './LoadingSpinner';
 import { majorCities, City } from '../data/cities';
 import { BackButton } from './BackButton';
+import { useI18n } from './I18n';
 
 export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [locationAnalysis, setLocationAnalysis] = useState<{ result: LocationAnalysisResult, imageUrl: string | null } | null>(null);
@@ -32,6 +33,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
   const [panelTitle, setPanelTitle] = useState('Analysis');
+  const { language } = useI18n();
 
   useEffect(() => {
     const handleResize = () => {
@@ -77,7 +79,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     openPanel(locationName || 'Location Analysis');
 
     try {
-      const { analysis, imageUrl } = await analyzeLocationByCoordinates(lat, lng, locationName);
+      const { analysis, imageUrl } = await analyzeLocationByCoordinates(lat, lng, language, locationName);
       setLocationAnalysis({ result: analysis, imageUrl: imageUrl });
       setPanelTitle(analysis.locationName);
     } catch (err) {
@@ -86,7 +88,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, language]);
 
   const startCityAnalysis = useCallback(async (city: City) => {
     if (isLoading) return;
@@ -100,7 +102,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     openPanel(`Health Snapshot: ${city.name}`);
     
     try {
-        const snapshot = await getCityHealthSnapshot(city.name, city.country);
+        const snapshot = await getCityHealthSnapshot(city.name, city.country, language);
         setCitySnapshot(snapshot);
     } catch (err) {
         console.error(err);
@@ -108,7 +110,7 @@ export const GlobePage: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     } finally {
         setIsLoading(false);
     }
-  }, [isLoading]);
+  }, [isLoading, language]);
 
   const handleGlobeClick = useCallback(({ lat, lng }: { lat: number, lng: number }) => {
     setGeocodedName(null);
