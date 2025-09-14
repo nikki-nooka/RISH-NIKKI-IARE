@@ -32,7 +32,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [result, setResult] = useState<SymptomAnalysisResult | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const { language: selectedLanguage } = useI18n();
+    const { language: selectedLanguage, t } = useI18n();
 
     // Voice input state
     const [isListening, setIsListening] = useState(false);
@@ -100,7 +100,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (symptoms.trim().length < 10) {
-            setError("Please provide a more detailed description of your symptoms (at least 10 characters).");
+            setError(t('symptom_error_short_input'));
             return;
         }
         
@@ -133,7 +133,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                     <StethoscopeIcon className="w-10 h-10 text-teal-500" />
                     <div>
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">
-                            AI Symptom Checker
+                            {t('symptom_checker_title')}
                         </h1>
                     </div>
                 </div>
@@ -145,7 +145,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                         <HazardIcon className="w-6 h-6 text-yellow-500 mr-3 flex-shrink-0"/>
                         <div>
                             <p className="font-bold">For Informational Purposes Only</p>
-                            <p className="text-sm">This is not a medical diagnosis. Always consult a healthcare professional for advice.</p>
+                            <p className="text-sm">{t('symptom_disclaimer_short')}</p>
                         </div>
                     </div>
                 </div>
@@ -154,13 +154,13 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-sm border border-slate-200/80">
                         <div className="flex justify-between items-center mb-1">
                             <label htmlFor="symptoms" className="block text-lg font-semibold text-slate-700">
-                                Describe your symptoms
+                                {t('symptom_describe_label')}
                             </label>
                              <p className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                                Language: {currentLanguageName}
+                                {t('language_label', { lang: currentLanguageName })}
                              </p>
                         </div>
-                        <p className="text-sm text-slate-500 mt-1 mb-4">Be as detailed as possible. Include when they started and how you feel.</p>
+                        <p className="text-sm text-slate-500 mt-1 mb-4">{t('symptom_describe_detail')}</p>
                         <div className="relative">
                             <textarea
                                 id="symptoms"
@@ -168,7 +168,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                                 value={symptoms}
                                 onChange={(e) => setSymptoms(e.target.value)}
                                 className="w-full p-3 bg-slate-50 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition pr-12"
-                                placeholder={isListening ? "Listening..." : "e.g., 'I have a sore throat, headache, and have been feeling tired for 3 days...'"}
+                                placeholder={isListening ? t('symptom_placeholder_listening') : t('symptom_placeholder_example')}
                                 disabled={status === 'loading'}
                             />
                             {isSpeechSupported ? (
@@ -201,7 +201,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                             className="w-full mt-4 bg-teal-500 hover:bg-teal-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl"
                         >
                             <SendIcon className="w-5 h-5 mr-2" />
-                            {status === 'loading' ? 'Analyzing...' : 'Analyze My Symptoms'}
+                            {status === 'loading' ? t('symptom_analyzing_button') : t('symptom_analyze_button')}
                         </button>
                     </form>
                 )}
@@ -222,7 +222,7 @@ export const SymptomCheckerPage: React.FC<SymptomCheckerPageProps> = ({ onBack, 
                                 className="w-full mt-6 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-200"
                             >
                                 <StethoscopeIcon className="w-5 h-5 mr-2" />
-                                Start a New Analysis
+                                {t('start_new_analysis')}
                             </button>
                          </div>
                      )}

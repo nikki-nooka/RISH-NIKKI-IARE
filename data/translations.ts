@@ -24,7 +24,6 @@ type Translations = {
     [key: string]: TranslationDict;
 };
 
-// Add sample translations for demonstration
 export const translations: Translations = {
     // Welcome Page
     'welcome_user': { 'en-US': 'Welcome, {name}!', 'hi-IN': 'स्वागत है, {name}!', 'te-IN': 'స్వాగతం, {name}!' },
@@ -58,4 +57,26 @@ export const translations: Translations = {
     'explore_globe': { 'en-US': 'Explore the Globe', 'hi-IN': 'ग्लोब का अन्वेषण करें', 'te-IN': 'గ్లోబ్‌ను అన్వేషించండి' },
     'get_started': { 'en-US': 'Get Started', 'hi-IN': 'शुरू करें', 'te-IN': 'ప్రారంభించండి' },
     'homepage_subtitle': {'en-US': 'Explore the globe, uncover hidden environmental risks, and protect communities with AI-powered health insights.', 'hi-IN': 'ग्लोब का अन्वेषण करें, छिपे हुए पर्यावरणीय जोखिमों को उजागर करें, और एआई-संचालित स्वास्थ्य अंतर्दृष्टि के साथ समुदायों की रक्षा करें।', 'te-IN': 'గ్లోబ్‌ను అన్వేషించండి, దాచిన పర్యావరణ ప్రమాదాలను వెలికితీయండి మరియు AI-ఆధారిత ఆరోగ్య అంతర్దృష్టులతో సంఘాలను రక్షించండి.'},
+    
+    // ChatBot
+    'chatbot_welcome': { 'en-US': 'Hello! I am your voice assistant. You can ask me questions or tell me where to go, like "go to the symptom checker".', 'hi-IN': 'नमस्ते! मैं आपका वॉयस असिस्टेंट हूं। आप मुझसे सवाल पूछ सकते हैं या मुझे बता सकते हैं कि कहां जाना है, जैसे "लक्षण परीक्षक पर जाएं"।', 'te-IN': 'నమస్కారం! నేను మీ వాయిస్ అసిస్టెంట్‌ని. మీరు నన్ను ప్రశ్నలు అడగవచ్చు లేదా "లక్షణ తనిఖీకి వెళ్లండి" వంటివి ఎక్కడికి వెళ్లాలో చెప్పవచ్చు.' },
+    'chatbot_placeholder_ask': { 'en-US': 'Ask or give a command...', 'hi-IN': 'पूछें या कमांड दें...', 'te-IN': 'అడగండి లేదా ఆదేశం ఇవ్వండి...' },
+    'chatbot_placeholder_listening': { 'en-US': 'Listening...', 'hi-IN': 'सुन रहा हूँ...', 'te-IN': 'వింటున్నాను...' },
+    'language_label': { 'en-US': 'Language: {lang}', 'hi-IN': 'भाषा: {lang}', 'te-IN': 'భాష: {lang}' },
+    'voice_not_available': { 'en-US': 'Voice output is not available for this language on your device', 'hi-IN': 'आपके डिवाइस पर इस भाषा के लिए वॉयస్ అవుట్‌పుట్ ઉપલબ્ધ નથી', 'te-IN': 'మీ పరికరంలో ఈ భాషకు వాయిస్ అవుట్‌పుట్ అందుబాటులో లేదు' },
+    'unmute': { 'en-US': 'Unmute', 'hi-IN': 'अनम्यूट', 'te-IN': 'అన్‌మ్యూట్ చేయండి' },
+    'mute': { 'en-US': 'Mute', 'hi-IN': 'म्यूट', 'te-IN': 'మ్యూట్ చేయండి' },
+    'chatbot_error': { 'en-US': 'Sorry, I encountered an error. Please try again.', 'hi-IN': 'क्षमा करें, मुझे एक त्रुटि मिली। कृपया पुन: प्रयास करें।', 'te-IN': 'క్షమించండి, నాకు ఒక దోషం ఎదురైంది. దయచేసి మళ్లీ ప్రయత్నించండి.' },
+    
+    // Symptom Checker Page
+    'symptom_checker_title': { 'en-US': 'AI Symptom Checker', 'hi-IN': 'एआई लक्षण परीक्षक', 'te-IN': 'AI లక్షణాల తనిఖీ' },
+    'symptom_disclaimer_short': { 'en-US': 'This is not a medical diagnosis. Always consult a healthcare professional for advice.', 'hi-IN': 'यह एक चिकित्सा निदान नहीं है। सलाह के लिए हमेशा एक स्वास्थ्य देखभाल पेशेवर से परामर्श करें।', 'te-IN': 'ఇది వైద్య నిర్ధారణ కాదు. సలహా కోసం ఎల్లప్పుడూ ఆరోగ్య సంరక్షణ నిపుణుడిని సంప్రదించండి.' },
+    'symptom_describe_label': { 'en-US': 'Describe your symptoms', 'hi-IN': 'अपने लक्षणों का वर्णन करें', 'te-IN': 'మీ లక్షణాలను వివరించండి' },
+    'symptom_describe_detail': { 'en-US': 'Be as detailed as possible. Include when they started and how you feel.', 'hi-IN': 'जितना संभव हो उतना विस्तृत रहें। बताएं कि वे कब शुरू हुए और आप कैसा महसूस करते हैं।', 'te-IN': 'సాధ్యమైనంత వివరంగా ఉండండి. అవి ఎప్పుడు ప్రారంభమయ్యాయో మరియు మీకు ఎలా అనిపిస్తుందో చేర్చండి.' },
+    'symptom_placeholder_example': { 'en-US': "e.g., 'I have a sore throat, headache, and have been feeling tired for 3 days...'", 'hi-IN': "उदा., 'मेरे गले में खराश, सिरदर्द है, और 3 दिनों से थकान महसूस हो रही है...'", 'te-IN': "ఉదా., 'నాకు గొంతు నొప్పి, తలనొప్పి ఉంది, మరియు 3 రోజులుగా అలసిపోయినట్లు అనిపిస్తోంది...'" },
+    'symptom_placeholder_listening': { 'en-US': 'Listening... I am ready to hear your symptoms.', 'hi-IN': 'सुन रहा हूँ... मैं आपके लक्षण सुनने के लिए तैयार हूँ।', 'te-IN': 'వింటున్నాను... మీ లక్షణాలను వినడానికి నేను సిద్ధంగా ఉన్నాను.' },
+    'symptom_analyze_button': { 'en-US': 'Analyze My Symptoms', 'hi-IN': 'मेरे लक्षणों का विश्लेषण करें', 'te-IN': 'నా లక్షణాలను విశ్లేషించండి' },
+    'symptom_analyzing_button': { 'en-US': 'Analyzing...', 'hi-IN': 'विश्लेषण हो रहा है...', 'te-IN': 'విశ్లేషిస్తోంది...' },
+    'symptom_error_short_input': { 'en-US': 'Please provide a more detailed description of your symptoms (at least 10 characters).', 'hi-IN': 'कृपया अपने लक्षणों का अधिक विस्तृत विवरण प्रदान करें (कम से कम 10 अक्षर)।', 'te-IN': 'దయచేసి మీ లక్షణాల యొక్క మరింత వివరణాత్మక వర్ణనను అందించండి (కనీసం 10 అక్షరాలు).' },
+    'start_new_analysis': { 'en-US': 'Start a New Analysis', 'hi-IN': 'एक नया विश्लेषण शुरू करें', 'te-IN': 'కొత్త విశ్లేషణను ప్రారంభించండి' }
 };

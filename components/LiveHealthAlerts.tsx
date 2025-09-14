@@ -1,5 +1,4 @@
-import React, 'use client';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { getLiveHealthAlerts, getLocalHealthAlerts } from '../services/geminiService';
 import type { Alert, AlertCategory } from '../types';
 import { BiohazardIcon, WindIcon, SunIcon, GlobeIcon, MegaphoneIcon, MapPinIcon } from './icons';

@@ -4,6 +4,7 @@ import type { ChatMessage, Page } from '../types';
 import { BotIcon, SendIcon, CloseIcon, ChevronDownIcon, MicrophoneIcon, SpeakerWaveIcon, SpeakerXMarkIcon, SparklesIcon } from './icons';
 import { useI18n } from './I18n';
 import { supportedLanguages } from '../data/translations';
+import { LanguageSelector } from './LanguageSelector';
 
 interface ChatBotProps {
     onNavigate: (page: Page) => void;
@@ -30,7 +31,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const { language: selectedLanguage } = useI18n();
+    const { language: selectedLanguage, t } = useI18n();
     
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -44,10 +45,10 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
     useEffect(() => {
         if (isOpen && messages.length === 0) {
             setMessages([
-                { id: 'initial', role: 'bot', text: 'Hello! I am your voice assistant. You can ask me questions or tell me where to go, like "go to the symptom checker".' }
+                { id: 'initial', role: 'bot', text: t('chatbot_welcome') }
             ]);
         }
-    }, [isOpen, messages]);
+    }, [isOpen, messages, t]);
     
     useEffect(() => {
         // This effect is for loading voices for TTS
@@ -182,7 +183,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
             }
         } catch (error) {
             console.error('Chatbot error:', error);
-            const errorText = 'Sorry, I encountered an error. Please try again.';
+            const errorText = t('chatbot_error');
             setMessages(prev => prev.map(msg => msg.id === botMessageId ? { ...msg, text: errorText } : msg));
             speak(errorText);
         } finally {
@@ -206,8 +207,6 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
         }
     };
 
-    const currentLanguageName = supportedLanguages.find(l => l.code === selectedLanguage)?.name || 'Language';
-
     return (
         <>
             <button
@@ -221,16 +220,16 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
             {isOpen && (
                 <div className="fixed bottom-24 right-6 w-[90vw] max-w-sm h-[70vh] max-h-[550px] bg-white border border-slate-200 rounded-lg shadow-xl flex flex-col z-40 animate-fade-in-up">
                     <header className="p-3 flex justify-between items-center rounded-t-lg border-b border-slate-200">
-                         <p className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                           Language: {currentLanguageName}
-                         </p>
+                         <div className="w-32">
+                            <LanguageSelector variant="chatbot" />
+                         </div>
                          <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => setIsMuted(!isMuted)} 
                                 className="text-slate-400 hover:text-slate-600 disabled:text-slate-300 disabled:cursor-not-allowed"
-                                aria-label={isMuted ? "Unmute assistant" : "Mute assistant"}
+                                aria-label={isMuted ? t('unmute') : t('mute')}
                                 disabled={!isVoiceAvailable}
-                                title={!isVoiceAvailable ? "Voice output is not available for this language on your device" : (isMuted ? "Unmute" : "Mute")}
+                                title={!isVoiceAvailable ? t('voice_not_available') : (isMuted ? t('unmute') : t('mute'))}
                             >
                                 {isMuted || !isVoiceAvailable ? <SpeakerXMarkIcon className="w-6 h-6" /> : <SpeakerWaveIcon className="w-6 h-6" />}
                             </button>
@@ -265,7 +264,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ onNavigate }) => {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                                placeholder={isListening ? "Listening..." : "Ask or give a command..."}
+                                placeholder={isListening ? t('chatbot_placeholder_listening') : t('chatbot_placeholder_ask')}
                                 className="flex-1 bg-transparent py-2 px-3 text-slate-800 placeholder-slate-400 focus:outline-none"
                                 disabled={isLoading}
                             />
