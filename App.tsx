@@ -24,10 +24,10 @@ import { Bars3Icon, GlobeIcon } from './components/icons';
 import { FeedbackModal } from './components/FeedbackModal';
 import { I18nProvider } from './components/I18n';
 
-const ACTIVITY_HISTORY_KEY = 'geosick_activity_history';
-const GLOBAL_ACTIVITY_HISTORY_KEY = 'geosick_global_activity_history';
-const USERS_KEY = 'geosick_users';
-const SESSION_KEY = 'geosick_session_phone';
+const ACTIVITY_HISTORY_KEY = 'ojas_activity_history';
+const GLOBAL_ACTIVITY_HISTORY_KEY = 'ojas_global_activity_history';
+const USERS_KEY = 'ojas_users';
+const SESSION_KEY = 'ojas_session_phone';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -297,7 +297,7 @@ function AppContent() {
                     </button>
                     <div className="flex items-center gap-2">
                         <GlobeIcon className="w-7 h-7 text-blue-500" />
-                        <h1 className="text-lg font-bold tracking-tight text-slate-800">GeoSick</h1>
+                        <h1 className="text-lg font-bold tracking-tight text-slate-800">OJAS</h1>
                     </div>
                     <div className="w-7"></div>
                 </header>

@@ -36,7 +36,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onLoginClick, onAboutClick, 
                   <div className="flex items-center justify-center gap-3 sm:gap-4">
                       <GlobeIcon className="w-10 h-10 sm:w-16 sm:h-16 text-blue-500" />
                       <h1 className="text-4xl sm:text-6xl font-bold text-slate-800 tracking-tight">
-                          GeoSick
+                          OJAS
                       </h1>
                   </div>
                   <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-slate-600">

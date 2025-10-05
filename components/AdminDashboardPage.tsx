@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import type { User, ActivityLogItem } from '../types';
 import { LockClosedIcon, ListBulletIcon, ScanIcon, ClipboardListIcon, BrainCircuitIcon, StethoscopeIcon, UserGroupIcon, DocumentChartBarIcon } from './icons';
 import { BackButton } from './BackButton';
 
-const USERS_KEY = 'geosick_users';
-const GLOBAL_ACTIVITY_HISTORY_KEY = 'geosick_global_activity_history';
+const USERS_KEY = 'ojas_users';
+const GLOBAL_ACTIVITY_HISTORY_KEY = 'ojas_global_activity_history';
 
 const formatDateTime = (dateString?: string | null) => {
     if (!dateString) return 'N/A';

@@ -123,7 +123,7 @@ export const IntroAnimation: React.FC<IntroAnimationProps> = ({ onComplete }) =>
                         className="text-5xl md:text-6xl font-bold text-white tracking-tight" 
                         style={{ textShadow: '0 0 25px rgba(147, 197, 253, 0.7)' }}
                     >
-                        GeoSick
+                        OJAS
                     </h1>
                     <p className="text-base md:text-lg text-blue-200 mt-2 tracking-wider">
                         AI-Powered Environmental Health Intelligence

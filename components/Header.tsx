@@ -7,7 +7,7 @@ export const Header: React.FC = () => {
             <div className="flex items-center justify-center gap-3">
                 <GlobeIcon className="w-10 h-10 text-blue-500" />
                 <h1 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">
-                    GeoSick
+                    OJAS
                 </h1>
             </div>
             <p className="mt-3 text-base text-slate-600">

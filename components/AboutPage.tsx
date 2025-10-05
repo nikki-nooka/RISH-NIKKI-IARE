@@ -28,7 +28,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
                 <div className="flex items-center justify-center gap-4 mb-4 animate-fade-in-up">
                     <SparklesIcon className="w-12 h-12 text-blue-500" />
                     <h1 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">
-                        About GeoSick
+                        About OJAS
                     </h1>
                 </div>
                 <p className="max-w-3xl mx-auto text-lg text-slate-600 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -81,7 +81,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
         </main>
         
         <footer className="w-full text-center p-8 text-slate-500 text-sm">
-            GeoSick &copy; {new Date().getFullYear()} - Intelligence for a Healthier Planet.
+            OJAS &copy; {new Date().getFullYear()} - Intelligence for a Healthier Planet.
         </footer>
     </div>
   );

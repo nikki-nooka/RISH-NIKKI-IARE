@@ -1,17 +1,16 @@
 
+
 import React, { useState } from 'react';
 import { CloseIcon, GlobeIcon, PhoneIcon, LockClosedIcon, UserIcon, CalendarIcon, AtSymbolIcon } from './icons';
 import RotatingGlobe from './RotatingGlobe';
 import type { User } from '../types';
-import { auth, googleProvider } from '../firebaseConfig';
-import { signInWithPopup } from 'firebase/auth';
 
 interface AuthPageProps {
   onClose: () => void;
   onAuthSuccess: (user: User) => void;
 }
 
-const USERS_KEY = 'geosick_users';
+const USERS_KEY = 'ojas_users';
 
 type ViewMode = 'login' | 'signup';
 
@@ -132,40 +131,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
          setIsLoading(false);
     }
   };
-
-  const signInWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      const allUsers: any[] = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
-      let foundUser = allUsers.find(u => u.email === user.email);
-
-      if (foundUser) {
-        onAuthSuccess(foundUser);
-      } else {
-        const newUser: User = {
-          phone: user.phoneNumber || '',
-          name: user.displayName || '',
-          email: user.email || '',
-          date_of_birth: '',
-          gender: '',
-          place: '',
-          password: '', // No password for Google sign-in
-          created_at: new Date().toISOString(),
-        };
-        allUsers.push(newUser);
-        localStorage.setItem(USERS_KEY, JSON.stringify(allUsers));
-        onAuthSuccess(newUser);
-      }
-    } catch (error) {
-      console.error(error);
-      setError('Failed to sign in with Google.');
-    }
-  };
   
   const inputClasses = "w-full pl-11 pr-3 py-3 bg-white border border-slate-300 rounded-md placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-shadow";
   const buttonClasses = "w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-md transition-all duration-300 shadow-sm hover:shadow-md disabled:bg-slate-400 disabled:cursor-not-allowed";
-  const googleButtonClasses = "w-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-md transition-all duration-300 shadow-sm hover:shadow-md flex items-center justify-center";
 
   const renderSignUpForm = () => (
      <form onSubmit={handleSignUp} className="space-y-4">
@@ -237,20 +205,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
         <button type="submit" disabled={isLoading} className={buttonClasses}>
             {isLoading ? 'Creating Account...' : 'Create Account'}
         </button>
-        <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-slate-300"></div>
-            <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
-            <div className="flex-grow border-t border-slate-300"></div>
-        </div>
-        <button type="button" onClick={signInWithGoogle} disabled={isLoading} className={googleButtonClasses}>
-            <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
-              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-              <path fill="#FF3D00" d="m6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/>
-      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.222 0-9.612-3.87-11.187-8.973l-6.571 4.819C9.656 39.663 16.318 44 24 44z"/>
-      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.012 35.196 44 30.024 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-            </svg>
-            Sign Up with Google
-        </button>
     </form>
   );
 
@@ -278,20 +232,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
         <button type="submit" disabled={isLoading} className={buttonClasses}>
             {isLoading ? 'Logging In...' : 'Login Securely'}
         </button>
-        <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-slate-300"></div>
-            <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
-            <div className="flex-grow border-t border-slate-300"></div>
-        </div>
-        <button type="button" onClick={signInWithGoogle} disabled={isLoading} className={googleButtonClasses}>
-             <svg className="w-5 h-5 mr-3" viewBox="0 0 48 48">
-              <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-              <path fill="#FF3D00" d="m6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/>
-      <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.222 0-9.612-3.87-11.187-8.973l-6.571 4.819C9.656 39.663 16.318 44 24 44z"/>
-      <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.012 35.196 44 30.024 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-            </svg>
-            Sign In with Google
-        </button>
     </form>
   );
 
@@ -303,7 +243,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
             <div className="absolute inset-0 z-0 h-full w-full opacity-50"><RotatingGlobe /></div>
             <div className="z-10 text-center">
                 <GlobeIcon className="w-16 h-16 lg:w-20 lg:h-20 text-white mx-auto mb-4"/>
-                <h2 className="text-2xl lg:text-3xl font-bold">GeoSick</h2>
+                <h2 className="text-2xl lg:text-3xl font-bold">OJAS</h2>
                 <p className="mt-2 text-blue-200 text-sm lg:text-base">AI-Powered Environmental Health Intelligence.</p>
             </div>
         </div>
@@ -332,7 +272,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onClose, onAuthSuccess }) =>
                      {infoMessage ? (
                          <p className="text-sm text-blue-700 bg-blue-50 p-3 rounded-md mt-1 mb-6">{infoMessage}</p>
                     ) : (
-                        <p className="text-slate-500 mt-1 mb-6">Get started with GeoSick's full suite of tools.</p>
+                        <p className="text-slate-500 mt-1 mb-6">Get started with OJAS's full suite of tools.</p>
                     )}
                     {renderSignUpForm()}
                 </div>

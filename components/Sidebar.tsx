@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, currentPage, onNavigate,
                 <div className="flex items-center justify-between pb-4 border-b border-slate-700">
                     <div className="flex items-center gap-2 px-2">
                         <GlobeIcon className="w-8 h-8 text-blue-400" />
-                        <h1 className="text-xl font-bold tracking-tight">GeoSick</h1>
+                        <h1 className="text-xl font-bold tracking-tight">OJAS</h1>
                     </div>
                     <button onClick={onClose} className="md:hidden p-1 text-slate-400 hover:text-white" aria-label="Close menu">
                         <CloseIcon className="w-6 h-6" />

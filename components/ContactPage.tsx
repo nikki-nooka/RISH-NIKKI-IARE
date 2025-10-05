@@ -98,10 +98,10 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
   };
   
   const faqs = [
-    { q: "Is GeoSick a replacement for a doctor?", a: "Absolutely not. GeoSick is an informational tool designed to provide insights into environmental health risks and potential conditions. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with any health concerns." },
+    { q: "Is OJAS a replacement for a doctor?", a: "Absolutely not. OJAS is an informational tool designed to provide insights into environmental health risks and potential conditions. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider with any health concerns." },
     { q: "How does the AI analysis work?", a: "Our platform uses Google's advanced Gemini AI models. We provide the AI with data (like geographic coordinates or an image) and a carefully crafted prompt. The AI then analyzes this information to identify patterns, hazards, and potential health correlations based on its vast training data." },
     { q: "Is my data private and secure?", a: "For this demonstration version, all user data, including login information and activity history, is stored locally in your browser's localStorage. No personal data is sent to or stored on our servers, ensuring your privacy. A production version would use a secure, dedicated authentication service." },
-    { q: "Who is GeoSick for?", a: "GeoSick is designed for everyone. Individuals can use it for personal health awareness, communities can monitor local environmental conditions, and public health organizations can leverage it for large-scale risk assessment and proactive planning." }
+    { q: "Who is OJAS for?", a: "OJAS is designed for everyone. Individuals can use it for personal health awareness, communities can monitor local environmental conditions, and public health organizations can leverage it for large-scale risk assessment and proactive planning." }
   ];
 
   return (
@@ -126,9 +126,9 @@ export const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
                             </p>
                         </div>
                         <div className="space-y-4">
-                            <ContactCard icon={<MailIcon className="w-6 h-6" />} title="General Inquiries" email="support@geosick.com" />
-                            <ContactCard icon={<BriefcaseIcon className="w-6 h-6" />} title="Partnerships" email="partners@geosick.com" />
-                            <ContactCard icon={<MegaphoneIcon className="w-6 h-6" />} title="Media & Press" email="press@geosick.com" />
+                            <ContactCard icon={<MailIcon className="w-6 h-6" />} title="General Inquiries" email="support@ojas.com" />
+                            <ContactCard icon={<BriefcaseIcon className="w-6 h-6" />} title="Partnerships" email="partners@ojas.com" />
+                            <ContactCard icon={<MegaphoneIcon className="w-6 h-6" />} title="Media & Press" email="press@ojas.com" />
                         </div>
 
                         {/* FAQ Section */}

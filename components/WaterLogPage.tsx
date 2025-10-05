@@ -7,9 +7,9 @@ interface WaterLogPageProps {
   onBack: () => void;
 }
 
-const WATER_LOG_SETTINGS_KEY = 'geosick_waterlog_settings';
-const WATER_LOG_TODAY_KEY = 'geosick_waterlog_today';
-const LAST_NOTIFICATION_KEY = 'geosick_last_notification_timestamp';
+const WATER_LOG_SETTINGS_KEY = 'ojas_waterlog_settings';
+const WATER_LOG_TODAY_KEY = 'ojas_waterlog_today';
+const LAST_NOTIFICATION_KEY = 'ojas_last_notification_timestamp';
 
 const DEFAULT_SETTINGS: WaterLogSettings = {
   goal: 2500,
@@ -54,7 +54,7 @@ const useWaterReminder = (settings: WaterLogSettings['notifications']) => {
         new Notification('💧 Time to Hydrate!', {
           body: "A friendly reminder to drink some water.",
           icon: '/favicon.svg',
-          tag: 'geosick-water-reminder'
+          tag: 'ojas-water-reminder'
         });
         localStorage.setItem(LAST_NOTIFICATION_KEY, now.getTime().toString());
       }

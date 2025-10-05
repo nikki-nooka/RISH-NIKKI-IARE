@@ -7,7 +7,7 @@ interface FeedbackModalProps {
   onClose: () => void;
 }
 
-const FEEDBACK_KEY = 'geosick_feedback';
+const FEEDBACK_KEY = 'ojas_feedback';
 
 const Star: React.FC<{ filled: boolean; onHover: () => void; onClick: () => void; }> = ({ filled, onHover, onClick }) => (
     <svg 
@@ -79,7 +79,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ user, onClose }) =
                 {status === 'sent' ? (
                     <div className="p-8 text-center">
                         <h3 className="text-2xl font-bold text-green-600">Thank You!</h3>
-                        <p className="mt-2 text-slate-600">Your feedback is valuable and helps us improve GeoSick.</p>
+                        <p className="mt-2 text-slate-600">Your feedback is valuable and helps us improve OJAS.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">

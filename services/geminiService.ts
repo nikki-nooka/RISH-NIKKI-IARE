@@ -181,7 +181,7 @@ export const analyzeImage = async (base64ImageData: string, language: string): P
     };
 
     const textPart = {
-        text: `You are an expert environmental health and public safety analyst named GeoSick. Analyze the provided image of a geographical area.
+        text: `You are an expert environmental health and public safety analyst named OJAS. Analyze the provided image of a geographical area.
         1.  **Identify Potential Health Hazards:** Pinpoint any visible issues such as stagnant water, garbage piles, pollution, pests, or poor sanitation. Be specific.
         2.  **Predict Associated Diseases:** Based on the identified hazards, list potential diseases (e.g., Malaria from stagnant water, Cholera from contaminated water sources, respiratory issues from air pollution).
         3.  **Provide a Detailed Report:** Synthesize your findings into a clear, structured report.
@@ -294,7 +294,7 @@ const botCommandSchema = (pages: Page[]) => ({
 });
 
 export const getBotCommand = async (prompt: string, language: string, availablePages: Page[]): Promise<BotCommandResponse> => {
-    const systemPrompt = `You are a voice assistant for a health app called GeoSick. Your primary goal is to help the user navigate the app or answer their health-related questions.
+    const systemPrompt = `You are a voice assistant for a health app called OJAS. Your primary goal is to help the user navigate the app or answer their health-related questions.
 
 Current Language for response: ${language}.
 

@@ -1,4 +1,4 @@
-# GeoSick: AI-Powered Environmental Health Intelligence
+# OJAS: AI-Powered Environmental Health Intelligence
 
 **A sophisticated web application that leverages Google's Gemini AI to provide real-time, location-based environmental health analysis and personalized health insights.**
 
@@ -17,7 +17,7 @@
 *   **The Need:** There is a pressing need for a tool that democratizes environmental intelligence, translating complex data into clear insights that empower proactive health decisions.
 
 ## Overview of Our Solution
-GeoSick is a cutting-edge web application that bridges the gap between environmental data and public health. It operates on a sophisticated, multi-layered architecture powered by **Google's Gemini AI models** and a modern **React/TypeScript** frontend.
+OJAS is a cutting-edge web application that bridges the gap between environmental data and public health. It operates on a sophisticated, multi-layered architecture powered by **Google's Gemini AI models** and a modern **React/TypeScript** frontend.
 
 Here’s a breakdown of how it works:
 
@@ -43,7 +43,7 @@ Here’s a breakdown of how it works:
     *   **Location Intelligence:** The application uses Gemini for highly accurate geocoding (turning a search query like "Eiffel Tower" into coordinates) and for finding nearby medical facilities based on a given coordinate pair.
     *   **User Data:** User authentication is handled locally within the browser using `localStorage`. This is a simplified system for demonstration purposes. Activity history is also stored locally.
 
-This combination of a highly interactive frontend and a powerful, versatile AI backend allows GeoSick to deliver on its mission: transforming complex environmental data into accessible and actionable public health intelligence.
+This combination of a highly interactive frontend and a powerful, versatile AI backend allows OJAS to deliver on its mission: transforming complex environmental data into accessible and actionable public health intelligence.
 
 ## Key Features
 - **🌍 Interactive 3D Globe Explorer**: Click anywhere on a high-fidelity 3D globe or use the search function to initiate a detailed environmental health analysis for that specific location.
@@ -81,7 +81,7 @@ This phase focuses on expanding the platform's capabilities and data sources to 
 - **Official Data Integration**: Integrate with official public health and environmental APIs (e.g., from WHO, CDC, local weather services) to enrich the AI's contextual understanding and improve the accuracy of its analyses and forecasts.
 - **Predictive Modeling**: Leverage the accumulated anonymous data to develop predictive models that can forecast potential disease outbreak hotspots or high-risk periods with greater accuracy.
 - **Native Mobile Applications**: Develop dedicated iOS and Android applications to provide a more seamless user experience, better performance, and deeper integration with device hardware (GPS, camera, offline access).
-- **Enterprise & NGO Solutions**: Create a specialized version of GeoSick for public health organizations, offering advanced analytics, custom reporting tools, and direct data integration capabilities.
+- **Enterprise & NGO Solutions**: Create a specialized version of OJAS for public health organizations, offering advanced analytics, custom reporting tools, and direct data integration capabilities.
 
 ### Technical Scalability
 The application is architected for high scalability with minimal operational overhead.
@@ -90,7 +90,7 @@ The application is architected for high scalability with minimal operational ove
 - **Authentication**: The current implementation uses a simplified `localStorage`-based system for user management. For a production environment, this would be replaced with a scalable, secure, dedicated external authentication service.
 
 ## Installation and Setup
-Follow these steps to get a local copy of GeoSick up and running.
+Follow these steps to get a local copy of OJAS up and running.
 
 **Prerequisites:**
 - Node.js (v18 or later recommended)
@@ -98,8 +98,8 @@ Follow these steps to get a local copy of GeoSick up and running.
 
 **1. Clone the Repository**
 ```bash
-git clone https://github.com/your-username/geosick.git
-cd geosick
+git clone https://github.com/your-username/ojas.git
+cd ojas
 ```
 
 **2. Install Dependencies**
@@ -110,7 +110,7 @@ yarn install
 ```
 
 **3. Set Up Environment Variables**
-GeoSick requires a Google Gemini API key to function.
+OJAS requires a Google Gemini API key to function.
 
 - Create a file named `.env` in the root of your project directory.
 - Add your API key to this file:
